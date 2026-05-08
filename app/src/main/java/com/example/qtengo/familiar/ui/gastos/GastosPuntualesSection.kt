@@ -15,11 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Sección que muestra los gastos puntuales (no recurrentes) del usuario.
+// Los gastos generados desde una lista de la compra se identifican con una etiqueta especial.
+// Permite editar y eliminar cada gasto.
 @Composable
 fun GastosPuntualesSection(
     gastos: List<Gasto>,
     onEdit: (Gasto) -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit  // Recibe el ID del gasto a eliminar
 ) {
     Text(
         text = "Gastos puntuales",
@@ -30,6 +33,7 @@ fun GastosPuntualesSection(
     )
 
     if (gastos.isEmpty()) {
+        // Estado vacío
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -52,6 +56,7 @@ fun GastosPuntualesSection(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Icono emoji según la categoría del gasto
                     Box(
                         modifier = Modifier
                             .size(44.dp)
@@ -61,16 +66,18 @@ fun GastosPuntualesSection(
                         Text(
                             text = when (gasto.categoria) {
                                 "Alimentación" -> "🛒"
-                                "Ocio" -> "🎬"
-                                "Transporte" -> "🚗"
-                                "Salud" -> "💊"
-                                "Suministros" -> "💡"
-                                else -> "💰"
+                                "Ocio"         -> "🎬"
+                                "Transporte"   -> "🚗"
+                                "Salud"        -> "💊"
+                                "Suministros"  -> "💡"
+                                else           -> "💰"
                             },
                             fontSize = 20.sp
                         )
                     }
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = gasto.descripcion,
@@ -83,6 +90,7 @@ fun GastosPuntualesSection(
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
+                        // Etiqueta especial para gastos generados automáticamente desde una lista de la compra
                         if (gasto.origen == "lista_compra") {
                             Text(
                                 text = "📋 Desde lista de la compra",
@@ -91,12 +99,16 @@ fun GastosPuntualesSection(
                             )
                         }
                     }
+
+                    // Importe en negativo y rojo para indicar que es un gasto
                     Text(
                         text = "-%.2f €".format(gasto.cantidad),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFD32F2F)
                     )
+
+                    // Botón editar
                     IconButton(onClick = { onEdit(gasto) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -104,6 +116,8 @@ fun GastosPuntualesSection(
                             tint = Color(0xFF1565C0)
                         )
                     }
+
+                    // Botón eliminar
                     IconButton(onClick = { onDelete(gasto.id) }) {
                         Icon(
                             imageVector = Icons.Default.Delete,

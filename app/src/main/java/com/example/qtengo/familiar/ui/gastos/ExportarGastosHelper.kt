@@ -13,22 +13,31 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Helper para exportar gastos a CSV o PDF y guardarlos en la carpeta Descargas.
+// Usa MediaStore en Android 10+ y acceso directo al sistema de archivos en versiones anteriores.
 object ExportarGastosHelper {
 
+    // Genera un timestamp con formato yyyyMMdd_HHmm para el nombre del archivo
     private fun timestamp(): String =
         SimpleDateFormat("yyyyMMdd_HHmm", Locale("es", "ES")).format(Date())
 
     // ─── CSV ─────────────────────────────────────────────────────────────────
 
+    // Exporta la lista de gastos a un archivo CSV con cabecera y resumen por categoría al final.
+    // Las comas en la descripción se sustituyen por punto y coma para no romper el formato.
     fun exportarCSV(context: Context, gastos: List<Gasto>) {
         val fileName = "gastos_${timestamp()}.csv"
         val sb = StringBuilder()
+
+        // Cabecera del CSV
         sb.appendLine("Fecha,Descripción,Categoría,Tipo,Cantidad (€)")
         gastos.forEach { g ->
+            // Sustituimos comas en la descripción para no romper el formato CSV
             val descripcion = g.descripcion.replace(",", ";")
             sb.appendLine("${g.fecha},$descripcion,${g.categoria},${g.tipo},${g.cantidad}")
         }
-        // Resumen por categoría al final
+
+        // Resumen por categoría al final del archivo
         sb.appendLine()
         sb.appendLine("RESUMEN POR CATEGORÍA")
         sb.appendLine("Categoría,Total (€)")
@@ -43,6 +52,8 @@ object ExportarGastosHelper {
 
     // ─── PDF ─────────────────────────────────────────────────────────────────
 
+    // Exporta la lista de gastos a un PDF con cabecera, resumen general,
+    // resumen por categoría y tabla de movimientos. Soporta múltiples páginas.
     fun exportarPDF(context: Context, gastos: List<Gasto>) {
         val fileName = "gastos_${timestamp()}.pdf"
         val document = PdfDocument()
@@ -52,6 +63,7 @@ object ExportarGastosHelper {
         var canvas = page.canvas
         var y = 50f
 
+        // Estilos de texto para los distintos elementos del PDF
         val paintTitulo = Paint().apply { textSize = 20f; isFakeBoldText = true; color = android.graphics.Color.rgb(26, 58, 107) }
         val paintSub = Paint().apply { textSize = 12f; color = android.graphics.Color.GRAY }
         val paintHeader = Paint().apply { textSize = 11f; isFakeBoldText = true; color = android.graphics.Color.rgb(26, 58, 107) }
@@ -64,6 +76,7 @@ object ExportarGastosHelper {
         val totalGastos = gastos.filter { it.tipo == "GASTO" }.sumOf { it.cantidad }
         val totalIngresos = gastos.filter { it.tipo == "INGRESO" }.sumOf { it.cantidad }
 
+        // Crea una nueva página y reinicia el cursor vertical
         fun nuevaPagina() {
             document.finishPage(page)
             pageNum++
@@ -73,11 +86,12 @@ object ExportarGastosHelper {
             y = 40f
         }
 
+        // Comprueba si queda espacio suficiente; si no, crea una nueva página
         fun checkSalto(espacio: Float = 18f) {
             if (y + espacio > 820f) nuevaPagina()
         }
 
-        // Encabezado
+        // Encabezado del informe
         canvas.drawText("Informe de Gastos — QTengo", 40f, y, paintTitulo)
         y += 22f
         canvas.drawText("Generado el $fechaHoy · ${gastos.size} movimientos", 40f, y, paintSub)
@@ -85,7 +99,7 @@ object ExportarGastosHelper {
         canvas.drawLine(40f, y, 555f, y, paintLine)
         y += 20f
 
-        // Resumen general
+        // Sección resumen general: gastos, ingresos y balance
         canvas.drawText("RESUMEN", 40f, y, paintSection)
         y += 18f
         canvas.drawText("Total gastos:   %.2f€".format(totalGastos), 40f, y, paintBody)
@@ -95,7 +109,7 @@ object ExportarGastosHelper {
         canvas.drawText("Balance:        %.2f€".format(totalIngresos - totalGastos), 40f, y, paintBody)
         y += 25f
 
-        // Resumen por categoría
+        // Sección resumen por categoría — solo se incluyen gastos, no ingresos
         canvas.drawText("POR CATEGORÍA", 40f, y, paintSection)
         y += 18f
         gastos.filter { it.tipo == "GASTO" }
@@ -110,12 +124,12 @@ object ExportarGastosHelper {
             }
         y += 20f
 
-        // Listado de movimientos
+        // Sección tabla de movimientos
         checkSalto(40f)
         canvas.drawText("MOVIMIENTOS", 40f, y, paintSection)
         y += 18f
 
-        // Cabecera tabla
+        // Cabecera de la tabla
         canvas.drawText("Fecha", 40f, y, paintHeader)
         canvas.drawText("Descripción", 115f, y, paintHeader)
         canvas.drawText("Categoría", 320f, y, paintHeader)
@@ -125,11 +139,12 @@ object ExportarGastosHelper {
         canvas.drawLine(40f, y, 555f, y, paintLine)
         y += 14f
 
+        // Filas alternadas con dos tonos de gris para mejorar la legibilidad
         gastos.forEachIndexed { i, g ->
             checkSalto()
             val paint = if (i % 2 == 0) paintBody else paintBodyAlt
             canvas.drawText(g.fecha, 40f, y, paint)
-            canvas.drawText(g.descripcion.take(26), 115f, y, paint)
+            canvas.drawText(g.descripcion.take(26), 115f, y, paint) // Truncamos para no salir del margen
             canvas.drawText(g.categoria.take(16), 320f, y, paint)
             canvas.drawText(g.tipo, 435f, y, paint)
             canvas.drawText("%.2f€".format(g.cantidad), 490f, y, paint)
@@ -138,18 +153,23 @@ object ExportarGastosHelper {
 
         document.finishPage(page)
 
+        // Convertimos el documento a bytes y lo guardamos en Descargas
         val bytes = ByteArrayOutputStream().also { document.writeTo(it); document.close() }.toByteArray()
         guardarArchivo(context, fileName, "application/pdf", bytes, "PDF")
     }
 
     // ─── Guardar en Descargas ─────────────────────────────────────────────────
 
+    // Guarda el archivo en la carpeta Descargas del dispositivo.
+    // Android 10+: usa MediaStore para respetar el almacenamiento por ámbitos.
+    // Android 9 e inferior: escribe directamente en el directorio público de descargas.
     private fun guardarArchivo(context: Context, fileName: String, mimeType: String, data: ByteArray, tipo: String) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val values = ContentValues().apply {
                     put(MediaStore.Downloads.DISPLAY_NAME, fileName)
                     put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                    // IS_PENDING = 1 reserva el archivo mientras se escribe — se libera al terminar
                     put(MediaStore.Downloads.IS_PENDING, 1)
                 }
                 val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
@@ -159,6 +179,7 @@ object ExportarGastosHelper {
                 values.put(MediaStore.Downloads.IS_PENDING, 0)
                 context.contentResolver.update(uri, values, null, null)
             } else {
+                // En Android 9 e inferior escribimos directamente en el directorio público
                 @Suppress("DEPRECATION")
                 val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 File(dir, fileName).writeBytes(data)

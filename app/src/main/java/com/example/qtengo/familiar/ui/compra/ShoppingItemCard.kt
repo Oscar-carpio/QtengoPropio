@@ -18,17 +18,22 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Tarjeta que representa un producto dentro de una lista de la compra.
+// Permite marcar/desmarcar, editar, eliminar y guardar como favorito.
+// Los productos marcados se muestran en azul claro con texto tachado.
 @Composable
 fun ShoppingItemCard(
     item: ShoppingItem,
-    esFavorito: Boolean,
-    onToggle: (Boolean) -> Unit,
+    esFavorito: Boolean,           // true si el producto ya está guardado como favorito
+    onToggle: (Boolean) -> Unit,   // Marca o desmarca el producto como recogido
     onDelete: () -> Unit,
-    onEdit: (nombre: String, cantidad: String, precio: Double) -> Unit,  // FIX WARN — precio Double
-    onFavorito: () -> Unit
+    onEdit: (nombre: String, cantidad: String, precio: Double) -> Unit,
+    onFavorito: () -> Unit         // Guarda o elimina el producto de favoritos
 ) {
+    // Controla la visibilidad del diálogo de edición
     var showEditDialog by remember { mutableStateOf(false) }
 
+    // Mostramos el diálogo de edición solo cuando el usuario pulsa el botón editar
     if (showEditDialog) {
         EditarItemDialog(
             item = item,
@@ -43,6 +48,7 @@ fun ShoppingItemCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
+        // Fondo azul claro si el producto está marcado, blanco si está pendiente
         colors = CardDefaults.cardColors(
             containerColor = if (item.isChecked) Color(0xFFE3F2FD) else Color.White
         ),
@@ -54,12 +60,15 @@ fun ShoppingItemCard(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Checkbox para marcar el producto como recogido en el carrito
             Checkbox(
                 checked = item.isChecked,
                 onCheckedChange = onToggle,
                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF1A3A6B))
             )
             Spacer(modifier = Modifier.width(8.dp))
+
+            // Icono del carrito — gris si está marcado, azul si está pendiente
             Icon(
                 imageVector = Icons.Default.ShoppingCart,
                 contentDescription = null,
@@ -67,7 +76,9 @@ fun ShoppingItemCard(
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
+
             Column(modifier = Modifier.weight(1f)) {
+                // Nombre tachado y gris si el producto está marcado
                 Text(
                     text = item.name,
                     fontSize = 16.sp,
@@ -76,7 +87,7 @@ fun ShoppingItemCard(
                     textDecoration = if (item.isChecked) TextDecoration.LineThrough else TextDecoration.None
                 )
                 Text(text = "Cantidad: ${item.quantity}", fontSize = 12.sp, color = Color.Gray)
-                // FIX WARN — formateamos Double a "X.XX €", solo si tiene precio
+                // Solo mostramos el precio si es mayor que 0
                 if (item.price > 0.0) {
                     Text(
                         text = "Precio: ${"%.2f".format(item.price)} €",
@@ -85,6 +96,8 @@ fun ShoppingItemCard(
                     )
                 }
             }
+
+            // Botón favorito — corazón relleno si ya es favorito, vacío si no
             IconButton(onClick = onFavorito) {
                 Icon(
                     imageVector = if (esFavorito) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
@@ -92,6 +105,8 @@ fun ShoppingItemCard(
                     tint = if (esFavorito) Color(0xFFE53935) else Color.Gray
                 )
             }
+
+            // Botón editar — abre el diálogo de edición
             IconButton(onClick = { showEditDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -99,6 +114,8 @@ fun ShoppingItemCard(
                     tint = Color(0xFF1A3A6B)
                 )
             }
+
+            // Botón eliminar
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,

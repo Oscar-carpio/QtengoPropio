@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+// Pantalla para añadir un nuevo gasto manual.
+// Pide descripción, importe y categoría. El tipo siempre es "GASTO".
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddGastoScreen(
@@ -25,6 +27,7 @@ fun AddGastoScreen(
     var errorDescripcion by remember { mutableStateOf(false) }
     var errorCantidad by remember { mutableStateOf(false) }
 
+    // Categorías disponibles — la primera se selecciona por defecto
     val categorias = listOf("Alimentación", "Suministros", "Ocio", "Transporte", "Salud", "Otros")
     var categoriaSeleccionada by remember { mutableStateOf("Alimentación") }
 
@@ -33,6 +36,7 @@ fun AddGastoScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
+        // Cabecera con título y botón de volver
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -62,6 +66,7 @@ fun AddGastoScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Campo descripción — obligatorio
             OutlinedTextField(
                 value = descripcion,
                 onValueChange = {
@@ -79,11 +84,12 @@ fun AddGastoScreen(
                 }
             )
 
+            // Campo importe — debe ser un número mayor que 0
             OutlinedTextField(
                 value = cantidad,
                 onValueChange = { input ->
                     cantidad = input
-                    //  — validamos que sea positivo y mayor que 0
+                    // Validamos en tiempo real: debe ser número positivo mayor que 0
                     errorCantidad = input.toDoubleOrNull()?.let { it <= 0 } ?: input.isNotBlank()
                 },
                 label = { Text("Cantidad (€)") },
@@ -104,6 +110,7 @@ fun AddGastoScreen(
                 color = Color(0xFF1A3A6B)
             )
 
+            // Chips de selección de categoría — solo una puede estar seleccionada
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -123,6 +130,7 @@ fun AddGastoScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Botón guardar — valida todos los campos antes de llamar al ViewModel
             Button(
                 onClick = {
                     val cantidadDouble = cantidad.toDoubleOrNull()
@@ -131,7 +139,7 @@ fun AddGastoScreen(
                     if (descripcion.isBlank()) {
                         errorDescripcion = true; valido = false
                     }
-                    // FIX WARN — cantidad debe existir y ser mayor que 0
+                    // La cantidad debe existir y ser mayor que 0
                     if (cantidadDouble == null || cantidadDouble <= 0) {
                         errorCantidad = true; valido = false
                     }
@@ -141,7 +149,7 @@ fun AddGastoScreen(
                             descripcion = descripcion.trim(),
                             cantidad = cantidadDouble,
                             categoria = categoriaSeleccionada,
-                            tipo = "GASTO"
+                            tipo = "GASTO" // Esta pantalla solo registra gastos, no ingresos
                         )
                         onGastoGuardado()
                     }

@@ -21,6 +21,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Pantalla principal del módulo de gastos.
+// Muestra el resumen del mes, gastos fijos, gastos puntuales y gráfico por categoría.
+// Permite filtrar por fechas, exportar a CSV/PDF y gestionar el presupuesto mensual.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GastosScreen(
@@ -39,6 +42,7 @@ fun GastosScreen(
 
     val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
+    // Estados de visibilidad de los distintos diálogos
     var showPresupuestoDialog by remember { mutableStateOf(false) }
     var presupuestoInput by remember { mutableStateOf("") }
     var gastoAEditar by remember { mutableStateOf<Gasto?>(null) }
@@ -48,13 +52,13 @@ fun GastosScreen(
     var showGrafico by remember { mutableStateOf(false) }
     var showExportarDialog by remember { mutableStateOf(false) }
 
-    // DatePicker states
+    // Estados de los DatePickers para el filtro de fechas
     val datePickerStateInicio = rememberDatePickerState()
     val datePickerStateFin = rememberDatePickerState()
     var showDatePickerInicio by remember { mutableStateOf(false) }
     var showDatePickerFin by remember { mutableStateOf(false) }
 
-    // Totales reactivos
+    // Calculamos los totales del mes en curso directamente desde el estado
     val mesActual = remember {
         SimpleDateFormat("MM/yyyy", Locale("es", "ES")).format(Date())
     }
@@ -63,15 +67,17 @@ fun GastosScreen(
         .sumOf { it.cantidad }
     val totalRecurrentes = gastosRecurrentes.sumOf { it.cantidad }
 
+    // true si hay algún filtro de fecha activo
     val hayFiltroActivo = fechaInicio != null || fechaFin != null
 
+    // Cargamos todos los datos al entrar en la pantalla
     LaunchedEffect(Unit) {
         viewModel.cargarGastos()
         viewModel.cargarPresupuesto()
         viewModel.cargarGastosRecurrentes()
     }
 
-    // DatePicker inicio
+    // DatePicker para seleccionar la fecha de inicio del filtro
     if (showDatePickerInicio) {
         DatePickerDialog(
             onDismissRequest = { showDatePickerInicio = false },
@@ -92,7 +98,8 @@ fun GastosScreen(
         }
     }
 
-    // DatePicker fin
+    // DatePicker para seleccionar la fecha de fin del filtro
+    // La hora se fija a 23:59:59 para incluir todos los gastos del día seleccionado
     if (showDatePickerFin) {
         DatePickerDialog(
             onDismissRequest = { showDatePickerFin = false },
@@ -118,7 +125,7 @@ fun GastosScreen(
         }
     }
 
-    // Diálogo filtro por fechas
+    // Diálogo para configurar el rango de fechas del filtro
     if (showFiltroDialog) {
         AlertDialog(
             onDismissRequest = { showFiltroDialog = false },
@@ -147,6 +154,7 @@ fun GastosScreen(
                             else "Seleccionar fecha fin"
                         )
                     }
+                    // Solo mostramos el botón limpiar si hay algún filtro activo
                     if (hayFiltroActivo) {
                         TextButton(
                             onClick = {
@@ -166,7 +174,8 @@ fun GastosScreen(
         )
     }
 
-    // Diálogo exportar
+    // Diálogo para exportar los gastos a CSV o PDF
+    // Si hay filtro activo exporta solo los gastos filtrados
     if (showExportarDialog) {
         AlertDialog(
             onDismissRequest = { showExportarDialog = false },
@@ -207,7 +216,7 @@ fun GastosScreen(
         )
     }
 
-    // Diálogo presupuesto
+    // Diálogo para establecer o cambiar el presupuesto mensual
     if (showPresupuestoDialog) {
         AlertDialog(
             onDismissRequest = { showPresupuestoDialog = false; presupuestoInput = "" },
@@ -222,6 +231,7 @@ fun GastosScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    // Solo guardamos si el importe es un número mayor que 0
                     presupuestoInput.toDoubleOrNull()?.let {
                         if (it > 0) {
                             viewModel.guardarPresupuesto(it)
@@ -239,7 +249,7 @@ fun GastosScreen(
         )
     }
 
-    // Diálogo editar gasto puntual
+    // Diálogo para editar un gasto puntual existente
     gastoAEditar?.let { gasto ->
         EditarGastoDialog(
             gasto = gasto,
@@ -251,7 +261,7 @@ fun GastosScreen(
         )
     }
 
-    // Diálogo añadir gasto recurrente
+    // Diálogo para añadir un nuevo gasto recurrente
     if (showAddRecurrenteDialog) {
         GastoRecurrenteDialog(
             gastoRecurrente = null,
@@ -263,7 +273,7 @@ fun GastosScreen(
         )
     }
 
-    // Diálogo editar gasto recurrente
+    // Diálogo para editar un gasto recurrente existente
     recurrenteAEditar?.let { recurrente ->
         GastoRecurrenteDialog(
             gastoRecurrente = recurrente,
@@ -280,7 +290,7 @@ fun GastosScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
-        // Header
+        // Cabecera con botones de gráfico, exportar y filtro de fechas
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -299,6 +309,7 @@ fun GastosScreen(
                 modifier = Modifier.weight(1f),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
+            // Botón gráfico — amarillo cuando está activo
             IconButton(onClick = { showGrafico = !showGrafico }) {
                 Icon(
                     imageVector = Icons.Default.BarChart,
@@ -306,6 +317,7 @@ fun GastosScreen(
                     tint = if (showGrafico) Color(0xFFFFC107) else Color.White
                 )
             }
+            // Botón exportar
             IconButton(onClick = { showExportarDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.FileDownload,
@@ -313,6 +325,7 @@ fun GastosScreen(
                     tint = Color.White
                 )
             }
+            // Botón filtro — amarillo cuando hay filtro activo
             IconButton(onClick = { showFiltroDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
@@ -320,10 +333,9 @@ fun GastosScreen(
                     tint = if (hayFiltroActivo) Color(0xFFFFC107) else Color.White
                 )
             }
-
         }
 
-        // Banner filtro activo
+        // Banner informativo que muestra el rango del filtro activo con opción de limpiarlo
         if (hayFiltroActivo) {
             Card(
                 modifier = Modifier
@@ -356,13 +368,14 @@ fun GastosScreen(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // Gráfico por categoría (visible solo si showGrafico = true)
+            // Gráfico de gastos por categoría — visible solo al pulsar el icono de gráfico
             if (showGrafico) {
                 item {
                     GraficoCategorias(gastosPorCategoria = gastosPorCategoria)
                 }
             }
 
+            // Tarjeta resumen con totales y barra de presupuesto
             item {
                 GastosResumenCard(
                     totalGastos = totalGastos,
@@ -375,6 +388,7 @@ fun GastosScreen(
                 )
             }
 
+            // Sección de gastos fijos mensuales
             item {
                 GastosFijosSection(
                     gastosRecurrentes = gastosRecurrentes,
@@ -384,6 +398,7 @@ fun GastosScreen(
                 )
             }
 
+            // Sección de gastos puntuales — muestra los filtrados si hay filtro activo
             item {
                 GastosPuntualesSection(
                     gastos = gastosFiltrados,
@@ -393,6 +408,7 @@ fun GastosScreen(
             }
         }
 
+        // Botón para navegar a la pantalla de añadir gasto manual
         Button(
             onClick = { onAddGasto() },
             modifier = Modifier

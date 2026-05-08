@@ -11,20 +11,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Tarjeta resumen del mes que muestra el total gastado, el presupuesto
+// y una barra de progreso que cambia de color según el porcentaje consumido.
 @Composable
 fun GastosResumenCard(
-    totalGastos: Double,
-    totalRecurrentes: Double,
-    presupuesto: Double?,
+    totalGastos: Double,      // Suma de gastos puntuales del mes
+    totalRecurrentes: Double, // Suma de gastos fijos mensuales
+    presupuesto: Double?,     // null si el usuario aún no ha configurado presupuesto
     onCambiarPresupuesto: () -> Unit
 ) {
+    // Total estimado = gastos puntuales + gastos fijos
     val totalMes = totalGastos + totalRecurrentes
+
+    // Porcentaje del presupuesto consumido — limitado entre 0 y 1 para la barra
     val porcentaje = if ((presupuesto ?: 0.0) > 0)
         (totalMes / presupuesto!!).toFloat().coerceIn(0f, 1f) else 0f
+
+    // Color de la barra según el nivel de gasto:
+    // verde < 75%, naranja entre 75% y 100%, rojo al superar el presupuesto
     val colorBarra = when {
-        porcentaje >= 1f -> Color(0xFFD32F2F)
+        porcentaje >= 1f    -> Color(0xFFD32F2F)
         porcentaje >= 0.75f -> Color(0xFFF57C00)
-        else -> Color(0xFF388E3C)
+        else                -> Color(0xFF388E3C)
     }
 
     Card(
@@ -44,12 +52,16 @@ fun GastosResumenCard(
                 fontSize = 14.sp,
                 color = Color.White.copy(alpha = 0.8f)
             )
+
+            // Importe total en grande
             Text(
                 text = "%.2f €".format(totalMes),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
+
+            // Desglose: gastos puntuales vs gastos fijos
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 Text(
                     text = "Puntuales: %.2f €".format(totalGastos),
@@ -64,6 +76,7 @@ fun GastosResumenCard(
                 )
             }
 
+            // Sección de presupuesto — solo se muestra si el usuario lo ha configurado
             if (presupuesto != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -72,6 +85,8 @@ fun GastosResumenCard(
                     color = Color.White.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Barra de progreso que refleja el porcentaje del presupuesto consumido
                 LinearProgressIndicator(
                     progress = { porcentaje },
                     modifier = Modifier.fillMaxWidth().height(8.dp),
@@ -79,11 +94,13 @@ fun GastosResumenCard(
                     trackColor = Color.White.copy(alpha = 0.3f)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+
+                // Mensaje de estado según el porcentaje consumido
                 Text(
                     text = when {
-                        porcentaje >= 1f -> "⚠️ Has superado el presupuesto"
+                        porcentaje >= 1f    -> "⚠️ Has superado el presupuesto"
                         porcentaje >= 0.75f -> "⚠️ Llevas el ${(porcentaje * 100).toInt()}% del presupuesto"
-                        else -> "Llevas el ${(porcentaje * 100).toInt()}% del presupuesto"
+                        else                -> "Llevas el ${(porcentaje * 100).toInt()}% del presupuesto"
                     },
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.9f)
@@ -91,6 +108,8 @@ fun GastosResumenCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Botón para establecer o cambiar el presupuesto mensual
             TextButton(
                 onClick = onCambiarPresupuesto,
                 colors = ButtonDefaults.textButtonColors(contentColor = Color.White)

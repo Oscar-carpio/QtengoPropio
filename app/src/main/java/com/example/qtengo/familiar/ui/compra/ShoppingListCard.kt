@@ -17,10 +17,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Tarjeta que representa una lista de la compra en la pantalla principal.
+// Muestra el nombre, número de productos y fecha de creación.
+// Al pulsar navega al detalle de la lista; el botón de papelera la elimina.
 @Composable
 fun ShoppingListCard(
     list: ShoppingList,
-    onClick: () -> Unit,
+    onClick: () -> Unit,  // Navega al detalle de la lista
     onDelete: () -> Unit
 ) {
     Card(
@@ -35,6 +38,7 @@ fun ShoppingListCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icono del carrito con fondo circular azul
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -48,7 +52,10 @@ fun ShoppingListCard(
                     modifier = Modifier.size(24.dp)
                 )
             }
+
             Spacer(modifier = Modifier.width(16.dp))
+
+            // Nombre de la lista y resumen: número de productos y fecha
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = list.name,
@@ -62,6 +69,8 @@ fun ShoppingListCard(
                     color = Color.Gray
                 )
             }
+
+            // Botón para eliminar la lista
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -69,6 +78,8 @@ fun ShoppingListCard(
                     tint = Color(0xFF1A3A6B)
                 )
             }
+
+            // Flecha indicadora de navegación al detalle
             Text(text = "→", fontSize = 20.sp, color = Color.Gray)
         }
     }

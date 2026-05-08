@@ -16,6 +16,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.qtengo.familiar.ui.gastos.GastosViewModel
 
+// Pantalla de detalle de una lista de la compra.
+// Muestra los productos de la lista, permite añadir, editar, eliminar y marcar productos.
+// Cuando todos los productos están marcados muestra un banner para registrar el gasto total.
 @Composable
 fun ShoppingListDetailScreen(
     shoppingList: ShoppingList,
@@ -23,23 +26,31 @@ fun ShoppingListDetailScreen(
     viewModel: ShoppingListViewModel = viewModel(),
     gastosViewModel: GastosViewModel = viewModel()
 ) {
+    // Control de visibilidad de los tres diálogos
     var showDialog by remember { mutableStateOf(false) }
     var showGastoDialog by remember { mutableStateOf(false) }
     var showFavoritosDialog by remember { mutableStateOf(false) }
+
+    // Importe introducido en el diálogo de registrar gasto
     var gastoTotal by remember { mutableStateOf("") }
 
     val items by viewModel.items.collectAsState()
     val favoritos by viewModel.favoritos.collectAsState()
-    val listaCompleta = items.isNotEmpty() && items.all { it.isChecked }
-    val precioTotal = items.sumOf { it.price }
     val isLoading by viewModel.isLoading.collectAsState()
 
+    // true cuando la lista tiene productos y todos están marcados
+    val listaCompleta = items.isNotEmpty() && items.all { it.isChecked }
+
+    // Suma de los precios de todos los productos de la lista
+    val precioTotal = items.sumOf { it.price }
+
+    // Cargamos los productos y favoritos cuando cambia la lista activa
     LaunchedEffect(shoppingList.id) {
         viewModel.cargarItems(shoppingList.id)
         viewModel.cargarFavoritos()
     }
 
-    // Diálogo añadir producto
+    // Diálogo para añadir un nuevo producto a la lista
     if (showDialog) {
         NuevoItemDialog(
             onConfirm = { nombre, cantidad, precio ->
@@ -50,7 +61,7 @@ fun ShoppingListDetailScreen(
         )
     }
 
-    // Diálogo favoritos
+    // Diálogo para ver y gestionar los productos favoritos del usuario
     if (showFavoritosDialog) {
         FavoritosDialog(
             favoritos = favoritos,
@@ -64,7 +75,7 @@ fun ShoppingListDetailScreen(
         )
     }
 
-    // Diálogo registrar gasto
+    // Diálogo para registrar el gasto total de la compra en el módulo de gastos
     if (showGastoDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -89,6 +100,7 @@ fun ShoppingListDetailScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    // Solo registramos si el importe es un número mayor que 0
                     val cantidad = gastoTotal.toDoubleOrNull()
                     if (cantidad != null && cantidad > 0) {
                         gastosViewModel.registrarGastoDesdeLista(
@@ -115,7 +127,7 @@ fun ShoppingListDetailScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
-        // Header
+        // Cabecera con nombre de la lista, progreso y precio total
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -135,11 +147,13 @@ fun ShoppingListDetailScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+                // Contador de productos marcados sobre el total
                 Text(
                     text = "${items.count { it.isChecked }}/${items.size} productos",
                     fontSize = 13.sp,
                     color = Color.White.copy(alpha = 0.7f)
                 )
+                // Suma de precios de todos los productos
                 Text(
                     text = "Total: ${"%.2f".format(precioTotal)} €",
                     fontSize = 13.sp,
@@ -148,7 +162,7 @@ fun ShoppingListDetailScreen(
             }
         }
 
-        // Barra de progreso
+        // Barra de progreso — avanza según los productos marcados
         val progress = if (items.isEmpty()) 0f else items.count { it.isChecked }.toFloat() / items.size
         LinearProgressIndicator(
             progress = { progress },
@@ -157,7 +171,8 @@ fun ShoppingListDetailScreen(
             trackColor = Color(0xFFBBDEFB)
         )
 
-        // Banner lista completa
+        // Banner que aparece cuando todos los productos están marcados
+        // Ofrece registrar el gasto en el módulo de gastos
         if (listaCompleta) {
             Card(
                 modifier = Modifier
@@ -200,7 +215,7 @@ fun ShoppingListDetailScreen(
             }
         }
 
-        // Lista de productos
+        // Lista de productos con scroll
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -209,7 +224,8 @@ fun ShoppingListDetailScreen(
             items(items) { item ->
                 ShoppingItemCard(
                     item = item,
-                    esFavorito = favoritos.any { it.name == item.name }, // 👈 compara por nombre
+                    // Comprobamos si el producto ya está en favoritos por nombre
+                    esFavorito = favoritos.any { it.name == item.name },
                     onToggle = { checked ->
                         viewModel.toggleItem(shoppingList.id, item.id, checked)
                     },
@@ -226,7 +242,7 @@ fun ShoppingListDetailScreen(
             }
         }
 
-        // Botón ver favoritos
+        // Botón para abrir el diálogo de favoritos
         Button(
             onClick = { showFavoritosDialog = true },
             enabled = !isLoading,
@@ -241,7 +257,7 @@ fun ShoppingListDetailScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Botón añadir producto
+        // Botón para añadir un nuevo producto a la lista
         Button(
             onClick = { showDialog = true },
             enabled = !isLoading,

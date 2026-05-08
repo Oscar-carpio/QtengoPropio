@@ -17,25 +17,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+// Pantalla principal del módulo de compra.
+// Muestra todas las listas del usuario con búsqueda en tiempo real.
+// Permite crear nuevas listas y navegar al detalle de cada una.
 @Composable
 fun ShoppingListScreen(
-    onListSelected: (ShoppingList) -> Unit,
+    onListSelected: (ShoppingList) -> Unit, // Navega al detalle de la lista seleccionada
     onBack: () -> Unit,
     viewModel: ShoppingListViewModel = viewModel()
 ) {
+    // Control de visibilidad del diálogo de nueva lista
     var showDialog by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") } // 🔍 Estado de búsqueda
+
+    // Texto de búsqueda — filtra las listas en tiempo real
+    var searchQuery by remember { mutableStateOf("") }
+
     val lists by viewModel.lists.collectAsState()
 
-    // Filtra las listas según el texto de búsqueda
+    // Filtramos las listas localmente sin necesidad de llamar a Firestore
     val filteredLists = lists.filter { list ->
         list.name.contains(searchQuery, ignoreCase = true)
     }
 
+    // Cargamos las listas una sola vez al entrar en la pantalla
     LaunchedEffect(Unit) {
         viewModel.cargarListas()
     }
 
+    // Diálogo para crear una nueva lista
     if (showDialog) {
         NuevaListaDialog(
             onConfirm = { nombre ->
@@ -51,7 +60,7 @@ fun ShoppingListScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
-        // Header
+        // Cabecera con título y botón de volver
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -75,7 +84,7 @@ fun ShoppingListScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔍 Barra de búsqueda
+        // Barra de búsqueda — filtra las listas por nombre en tiempo real
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -95,6 +104,7 @@ fun ShoppingListScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         if (filteredLists.isEmpty()) {
+            // Estado vacío — mensaje diferente según si hay búsqueda activa o no
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,6 +117,7 @@ fun ShoppingListScreen(
                 )
             }
         } else {
+            // Lista scrollable de tarjetas
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -122,6 +133,7 @@ fun ShoppingListScreen(
             }
         }
 
+        // Botón para crear una nueva lista
         Button(
             onClick = { showDialog = true },
             modifier = Modifier

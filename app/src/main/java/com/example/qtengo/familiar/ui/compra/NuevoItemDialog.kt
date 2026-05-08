@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 
+// Diálogo para añadir un nuevo producto a una lista de la compra.
+// Valida nombre (obligatorio), cantidad y precio (ambos opcionales) antes de confirmar.
 @Composable
 fun NuevoItemDialog(
     onConfirm: (nombre: String, cantidad: String, precio: Double) -> Unit,
@@ -18,12 +20,14 @@ fun NuevoItemDialog(
     var errorCantidad by remember { mutableStateOf(false) }
     var errorPrecio by remember { mutableStateOf(false) }
 
+    // Limpia todos los campos y errores — se llama al confirmar o cancelar
     fun resetear() {
         nombre = ""; cantidad = ""; precioTexto = ""
         errorNombre = false; errorCantidad = false; errorPrecio = false
     }
 
-    // Extrae el número al inicio de un texto como "2 kg", "500 ml", "3"
+    // Extrae el número al inicio de textos como "2 kg", "500 ml", "3"
+    // Devuelve null si no hay un número válido al principio del texto
     fun extraerNumero(texto: String): Double? {
         val numStr = texto.trim().split(" ", "kg", "Kg", "KG", "ml", "ML", "l", "L",
             "g", "G", "cm", "CM", "m", "M", "litros", "Litros").first().trim()
@@ -36,11 +40,12 @@ fun NuevoItemDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                // Campo nombre con validación
+                // Campo nombre — obligatorio
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = {
                         nombre = it
+                        // Limpiamos el error en tiempo real si el usuario empieza a escribir
                         if (errorNombre) errorNombre = it.isBlank()
                     },
                     label = { Text("Nombre del producto") },
@@ -51,11 +56,12 @@ fun NuevoItemDialog(
                     }
                 )
 
-                // Campo cantidad con soporte para unidades (ej: 2 kg, 500 ml)
+                // Campo cantidad — opcional, acepta unidades como "2 kg", "500 ml"
                 OutlinedTextField(
                     value = cantidad,
                     onValueChange = {
                         cantidad = it
+                        // Solo validamos si el campo tiene contenido
                         if (it.isNotBlank()) {
                             val num = extraerNumero(it)
                             errorCantidad = num == null || num < 0
@@ -71,7 +77,7 @@ fun NuevoItemDialog(
                     }
                 )
 
-                // Campo precio
+                // Campo precio — opcional, se normaliza la coma a punto antes de parsear
                 OutlinedTextField(
                     value = precioTexto,
                     onValueChange = { input ->
@@ -90,20 +96,22 @@ fun NuevoItemDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                // Validar nombre obligatorio
+                // Validamos todos los campos antes de confirmar
                 errorNombre = nombre.isBlank()
 
-                // Validar cantidad si no está vacía
+                // La cantidad es opcional — solo validamos si tiene contenido
                 val cantidadOk = if (cantidad.isBlank()) true else {
                     val num = extraerNumero(cantidad)
                     num != null && num >= 0
                 }
                 errorCantidad = !cantidadOk
 
+                // El precio es opcional — si está vacío se usa 0.0
                 val precioDouble = precioTexto.replace(",", ".").toDoubleOrNull() ?: 0.0
                 val precioValido = precioTexto.isBlank() || precioDouble >= 0.0
                 errorPrecio = !precioValido && precioTexto.isNotBlank()
 
+                // Solo confirmamos si todos los campos son válidos
                 if (!errorNombre && !errorCantidad && !errorPrecio) {
                     onConfirm(nombre.trim(), cantidad.trim(), precioDouble)
                     resetear()

@@ -15,13 +15,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Sección que muestra la lista de gastos fijos mensuales del usuario.
+// Cada tarjeta muestra un emoji según la categoría, descripción, fecha de cobro e importe.
+// Permite añadir, editar y eliminar gastos fijos.
 @Composable
 fun GastosFijosSection(
     gastosRecurrentes: List<GastoRecurrente>,
     onAdd: () -> Unit,
     onEdit: (GastoRecurrente) -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit  // Recibe el ID del gasto a eliminar
 ) {
+    // Cabecera con título y botón de añadir
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -41,6 +45,7 @@ fun GastosFijosSection(
     }
 
     if (gastosRecurrentes.isEmpty()) {
+        // Estado vacío
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -63,6 +68,7 @@ fun GastosFijosSection(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Icono emoji según la categoría del gasto
                     Box(
                         modifier = Modifier
                             .size(44.dp)
@@ -72,16 +78,19 @@ fun GastosFijosSection(
                         Text(
                             text = when (recurrente.categoria) {
                                 "Alimentación" -> "🛒"
-                                "Ocio" -> "🎬"
-                                "Transporte" -> "🚗"
-                                "Salud" -> "💊"
-                                "Suministros" -> "💡"
-                                else -> "🔄"
+                                "Ocio"         -> "🎬"
+                                "Transporte"   -> "🚗"
+                                "Salud"        -> "💊"
+                                "Suministros"  -> "💡"
+                                else           -> "🔄"
                             },
                             fontSize = 20.sp
                         )
                     }
+
                     Spacer(modifier = Modifier.width(12.dp))
+
+                    // Descripción y detalle del gasto
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = recurrente.descripcion,
@@ -95,12 +104,16 @@ fun GastosFijosSection(
                             color = Color.Gray
                         )
                     }
+
+                    // Importe en negativo para indicar que es un gasto
                     Text(
                         text = "-%.2f €".format(recurrente.cantidad),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF7B1FA2)
                     )
+
+                    // Botón editar
                     IconButton(onClick = { onEdit(recurrente) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -108,6 +121,8 @@ fun GastosFijosSection(
                             tint = Color(0xFF1565C0)
                         )
                     }
+
+                    // Botón eliminar
                     IconButton(onClick = { onDelete(recurrente.id) }) {
                         Icon(
                             imageVector = Icons.Default.Delete,

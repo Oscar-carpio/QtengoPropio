@@ -16,11 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Diálogo que muestra los productos favoritos del usuario.
+// Permite añadir un favorito directamente a la lista activa o eliminarlo.
 @Composable
 fun FavoritosDialog(
     favoritos: List<FavoriteItem>,
-    onAñadir: (FavoriteItem) -> Unit,
-    onEliminar: (String) -> Unit,
+    onAñadir: (FavoriteItem) -> Unit,   // Añade el favorito a la lista activa
+    onEliminar: (String) -> Unit,        // Elimina el favorito por su ID
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -28,6 +30,7 @@ fun FavoritosDialog(
         title = { Text("Productos favoritos") },
         text = {
             if (favoritos.isEmpty()) {
+                // Estado vacío — se muestra cuando el usuario no tiene favoritos guardados
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -41,6 +44,7 @@ fun FavoritosDialog(
                     )
                 }
             } else {
+                // Lista scrollable con altura máxima para no ocupar toda la pantalla
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.heightIn(max = 400.dp)
@@ -65,6 +69,7 @@ fun FavoritosDialog(
                                         fontWeight = FontWeight.Medium,
                                         color = Color(0xFF1A3A6B)
                                     )
+                                    // Solo mostramos cantidad y precio si tienen valor
                                     if (favorito.quantity.isNotBlank()) {
                                         Text(
                                             text = "Cantidad: ${favorito.quantity}",
@@ -72,7 +77,7 @@ fun FavoritosDialog(
                                             color = Color.Gray
                                         )
                                     }
-                                    // FIX WARN — formateamos Double a "X.XX €"
+                                    // Formateamos Double a "X.XX €" para evitar notación científica
                                     if (favorito.price > 0.0) {
                                         Text(
                                             text = "Precio: ${"%.2f".format(favorito.price)} €",
@@ -81,6 +86,8 @@ fun FavoritosDialog(
                                         )
                                     }
                                 }
+
+                                // Botón para añadir el favorito a la lista activa
                                 IconButton(onClick = { onAñadir(favorito) }) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
@@ -88,6 +95,8 @@ fun FavoritosDialog(
                                         tint = Color(0xFF1A3A6B)
                                     )
                                 }
+
+                                // Botón para eliminar el favorito permanentemente
                                 IconButton(onClick = { onEliminar(favorito.id) }) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
