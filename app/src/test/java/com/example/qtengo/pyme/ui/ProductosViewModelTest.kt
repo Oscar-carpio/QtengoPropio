@@ -68,7 +68,7 @@ class ProductosViewModelTest {
     fun updateQuantity_registraUnMovimientoDeStockSiLaCantidadCambia() = runTest {
         val product = Product(id = "prod1", name = "Martillo", quantity = 10.0, profile = "PYME")
 
-        viewModel.updateQuantity(product, 15.0)
+        viewModel.actualizarCantidad(product, 15.0)
         advanceUntilIdle()
 
         // Verifica que se actualiza el producto
@@ -86,10 +86,16 @@ class ProductosViewModelTest {
     fun insert_registraProductoYMovimientoInicial() = runTest {
         val product = Product(id = "new", name = "Nuevo", quantity = 20.0, profile = "PYME")
 
-        viewModel.insert(product)
+        viewModel.insertar(product)
         advanceUntilIdle()
 
-        coVerify { productRepository.insert(product) }
+        // Verificamos que se insertó un producto con el mismo nombre y cantidad
+        // sin comprobar el customId generado automáticamente
+        coVerify {
+            productRepository.insert(match {
+                it.name == product.name && it.quantity == product.quantity
+            })
+        }
         coVerify { stockRepository.insert(match { it.quantityChanged == 20.0 }) }
     }
 }

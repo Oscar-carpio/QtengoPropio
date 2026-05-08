@@ -122,7 +122,7 @@ class FinanzasViewModelTest {
     @Test
     fun insert_llamaAlRepositorioDeFinanzas() = runTest {
         val movement = FinanceMovement(concept = "Test", amount = 10.0, type = "INGRESO")
-        viewModel.insert(movement)
+        viewModel.insertar(movement)
         coVerify { financeRepository.insert(movement) }
     }
 
@@ -131,7 +131,7 @@ class FinanzasViewModelTest {
      */
     @Test
     fun delete_eliminaSiElIDNoEmpiezaPorNomina_() = runTest {
-        viewModel.delete("mov_123")
+        viewModel.eliminar("mov_123")
         coVerify { financeRepository.delete("mov_123") }
     }
 }

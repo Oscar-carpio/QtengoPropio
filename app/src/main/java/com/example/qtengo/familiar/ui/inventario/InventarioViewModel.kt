@@ -47,7 +47,7 @@ data class InventarioItem(
  * SEGURIDAD: Todas las operaciones pasan por [requireUid] para garantizar
  * que el usuario esté autenticado antes de acceder a Firestore.
  */
-class InventarioViewModel : ViewModel() {
+open class InventarioViewModel : ViewModel() {
 
     // ─── Dependencias ────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ class InventarioViewModel : ViewModel() {
 
     /** Lista de artículos del inventario. Solo lectura desde la UI. */
     private val _items = MutableStateFlow<List<InventarioItem>>(emptyList())
-    val items: StateFlow<List<InventarioItem>> = _items
+    open val items: StateFlow<List<InventarioItem>> = _items
 
     /**
      * Canal de errores para la UI. Emite mensajes legibles cuando ocurre
@@ -75,7 +75,7 @@ class InventarioViewModel : ViewModel() {
      * que se repita en recomposiciones.
      */
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    open val error: StateFlow<String?> = _error
 
     /**
      * Referencia al listener activo de Firestore.

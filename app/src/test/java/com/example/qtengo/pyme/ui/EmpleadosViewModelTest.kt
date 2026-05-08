@@ -63,7 +63,7 @@ class EmpleadosViewModelTest {
         viewModel.employees.observeForever(observer)
 
         // When
-        viewModel.loadProfile("PYME")
+        viewModel.cargarPerfil("PYME")
         advanceUntilIdle()
 
         // Then
@@ -83,7 +83,7 @@ class EmpleadosViewModelTest {
         val salario = 1500.0
 
         // When
-        viewModel.insert(nombre, "Gerente", salario, "123", "test@test.com", "Notas")
+        viewModel.insertar(nombre, "Gerente", salario, "123", "test@test.com", "Notas")
         advanceUntilIdle()
 
         // Then: Verificar persistencia del empleado
@@ -96,7 +96,7 @@ class EmpleadosViewModelTest {
     @Test
     fun delete_llamaAlRepositorioDeEmpleados() = runTest {
         val id = "emp_123"
-        viewModel.delete(id)
+        viewModel.eliminar(id)
         advanceUntilIdle()
         coVerify { employeeRepository.delete(id) }
     }
@@ -107,7 +107,7 @@ class EmpleadosViewModelTest {
     @Test
     fun update_llamaAlRepositorioDeEmpleados() = runTest {
         val emp = Employee(id = "1", name = "Editado")
-        viewModel.update(emp)
+        viewModel.actualizar(emp)
         advanceUntilIdle()
         coVerify { employeeRepository.update(emp) }
     }

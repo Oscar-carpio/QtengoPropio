@@ -1,4 +1,4 @@
-package com.example.qtengo.data.model.restauracion
+﻿package com.example.qtengo.data.model.restauracion
 
 data class RestauracionProducto(
     val id_producto: String = "",
@@ -39,7 +39,7 @@ data class RestauracionMovimiento(
 data class RestauracionReserva(
     val id: String = "",
     val nombreCliente: String = "",
-    val fecha: Long = 0L, // Timestamp
+    val fecha: Long = 0L,
     val comensales: Int = 0,
     val notas: String = ""
 )

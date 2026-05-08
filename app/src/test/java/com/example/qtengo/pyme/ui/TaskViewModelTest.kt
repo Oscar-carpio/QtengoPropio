@@ -68,7 +68,7 @@ class TaskViewModelTest {
         val observer = mockk<Observer<List<Task>>>(relaxed = true)
         viewModel.tasksByDate.observeForever(observer)
 
-        viewModel.selectDate(nuevaFecha)
+        viewModel.seleccionarFecha(nuevaFecha)
         advanceUntilIdle()
 
         Assert.assertEquals(nuevaFecha, viewModel.selectedDate.value)
@@ -81,7 +81,7 @@ class TaskViewModelTest {
     fun insertTask_llamaAlRepositorioConLaFechaDeCreacionDeHoy() = runTest {
         val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
 
-        viewModel.insertTask("Comprar pan", "Descripción", "ALTA", "30/12/2024")
+        viewModel.insertarTarea("Comprar pan", "Descripción", "ALTA", "30/12/2024")
         advanceUntilIdle()
 
         coVerify {
@@ -97,11 +97,11 @@ class TaskViewModelTest {
     fun updateTaskYDeleteTask_llamanCorrectamenteAlRepositorio() = runTest {
         val task = Task(id = "task_1", title = "Test")
 
-        viewModel.updateTask(task)
+        viewModel.actualizarTarea(task)
         advanceUntilIdle()
         coVerify { taskRepository.update(task) }
 
-        viewModel.deleteTask(task)
+        viewModel.eliminarTarea(task)
         advanceUntilIdle()
         coVerify { taskRepository.delete("task_1") }
     }
@@ -114,7 +114,7 @@ class TaskViewModelTest {
         viewModel.financeByDate.observeForever {}
         viewModel.stockByDate.observeForever {}
         
-        viewModel.selectDate(fecha)
+        viewModel.seleccionarFecha(fecha)
         advanceUntilIdle()
 
         // Verificar que se llamó a los repositorios correspondientes con esa fecha

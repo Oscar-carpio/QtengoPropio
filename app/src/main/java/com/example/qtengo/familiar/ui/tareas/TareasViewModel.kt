@@ -48,7 +48,7 @@ data class Tarea(
  * SEGURIDAD: Todas las operaciones verifican que el usuario esté autenticado
  * mediante [requireUid] antes de acceder a Firestore.
  */
-class TareasViewModel(application: Application) : AndroidViewModel(application) {
+open class TareasViewModel(application: Application) : AndroidViewModel(application) {
 
     // ─── Dependencias ────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ class TareasViewModel(application: Application) : AndroidViewModel(application) 
 
     /** Lista de tareas del usuario, ordenada por estado y prioridad. Solo lectura desde la UI. */
     private val _tareas = MutableStateFlow<List<Tarea>>(emptyList())
-    val tareas: StateFlow<List<Tarea>> = _tareas
+    open val tareas: StateFlow<List<Tarea>> = _tareas
 
     /**
      * Canal de errores para la UI. Emite un mensaje legible cuando ocurre cualquier
@@ -78,7 +78,7 @@ class TareasViewModel(application: Application) : AndroidViewModel(application) 
      * tras mostrar el mensaje para evitar que se repita en recomposiciones.
      */
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    open val error: StateFlow<String?> = _error
 
     /**
      * Referencia al listener activo de Firestore.

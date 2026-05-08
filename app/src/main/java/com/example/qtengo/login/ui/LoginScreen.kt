@@ -10,6 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 @Composable
 fun LoginScreen(
@@ -18,7 +20,22 @@ fun LoginScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences("qtengo_prefs", Context.MODE_PRIVATE) }
+
+    // ✅ MEJORA DE SEGURIDAD: EncryptedSharedPreferences cifra claves y valores
+    // con AES-256 usando la clave maestra del Android Keystore del dispositivo.
+    val prefs = remember {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        EncryptedSharedPreferences.create(
+            context,
+            "qtengo_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     var email by remember { mutableStateOf(prefs.getString("ultimo_email", "") ?: "") }
     var password by remember { mutableStateOf(prefs.getString("password_guardada", "") ?: "") }
@@ -30,10 +47,8 @@ fun LoginScreen(
         if (authState is AuthState.Success) {
             val success = authState as AuthState.Success
 
-            // Siempre guardamos el email
             prefs.edit().putString("ultimo_email", email).apply()
 
-            // Guardamos o borramos la contraseña según el checkbox
             if (recordarPassword) {
                 prefs.edit()
                     .putString("password_guardada", password)
@@ -81,7 +96,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Checkbox "Recordar contraseña"
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -119,21 +133,6 @@ fun LoginScreen(
                 Text("Entrar")
             }
         }
-
-        /* if (authState is AuthState.RecuperacionEnviada) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "✅ Correo de recuperación enviado. Revisa tu bandeja.",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodySmall
-            )
-        } */
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        /*TextButton(onClick = { authViewModel.recuperarPassword(email) }) {
-            Text("¿Olvidaste tu contraseña?")
-        }*/
 
         Spacer(modifier = Modifier.height(12.dp))
 

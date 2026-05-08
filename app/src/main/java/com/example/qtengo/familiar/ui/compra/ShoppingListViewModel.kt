@@ -68,7 +68,7 @@ data class FavoriteItem(
  *
  * SEGURIDAD: Todas las operaciones verifican la autenticación mediante [requireUid].
  */
-class ShoppingListViewModel : ViewModel() {
+open class ShoppingListViewModel : ViewModel() {
 
     // ─── Dependencias ────────────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ class ShoppingListViewModel : ViewModel() {
 
     /** Lista de listas de la compra del usuario. Solo lectura desde la UI. */
     private val _lists = MutableStateFlow<List<ShoppingList>>(emptyList())
-    val lists: StateFlow<List<ShoppingList>> = _lists
+    open val lists: StateFlow<List<ShoppingList>> = _lists
 
     /**
      * Productos de la lista actualmente abierta.
@@ -95,11 +95,11 @@ class ShoppingListViewModel : ViewModel() {
      * qué lista se está observando.
      */
     private val _items = MutableStateFlow<List<ShoppingItem>>(emptyList())
-    val items: StateFlow<List<ShoppingItem>> = _items
+    open val items: StateFlow<List<ShoppingItem>> = _items
 
     /** Productos favoritos del usuario para añadir rápidamente a listas. */
     private val _favoritos = MutableStateFlow<List<FavoriteItem>>(emptyList())
-    val favoritos: StateFlow<List<FavoriteItem>> = _favoritos
+    open val favoritos: StateFlow<List<FavoriteItem>> = _favoritos
 
     /**
      * Canal de errores para la UI. La UI debe llamar a [clearError] tras mostrar
@@ -126,7 +126,7 @@ class ShoppingListViewModel : ViewModel() {
      * para evitar envíos duplicados.
      */
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    open val isLoading: StateFlow<Boolean> = _isLoading
 
     // ─── Seguridad / Autenticación ───────────────────────────────────────────
 

@@ -70,7 +70,7 @@ data class GastoRecurrente(
  *
  * SEGURIDAD: Todas las operaciones verifican la autenticación mediante [requireUid].
  */
-class GastosViewModel : ViewModel() {
+open class GastosViewModel : ViewModel() {
 
     // ─── Dependencias ────────────────────────────────────────────────────────
 
@@ -99,14 +99,14 @@ class GastosViewModel : ViewModel() {
      * Privado (escritura solo desde el ViewModel), público en solo lectura.
      */
     private val _gastos = MutableStateFlow<List<Gasto>>(emptyList())
-    val gastos: StateFlow<List<Gasto>> = _gastos
+    open val gastos: StateFlow<List<Gasto>> = _gastos
 
     /**
      * Presupuesto mensual definido por el usuario. Null si aún no se ha configurado.
      * Se almacena en el documento raíz del usuario (no en una subcolección).
      */
     private val _presupuesto = MutableStateFlow<Double?>(null)
-    val presupuesto: StateFlow<Double?> = _presupuesto
+    open val presupuesto: StateFlow<Double?> = _presupuesto
 
     /**
      * Indicador de carga para operaciones de escritura.
@@ -114,11 +114,11 @@ class GastosViewModel : ViewModel() {
      * para evitar envíos duplicados.
      */
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    open val isLoading: StateFlow<Boolean> = _isLoading
 
     /** Lista de gastos fijos recurrentes del usuario. */
     private val _gastosRecurrentes = MutableStateFlow<List<GastoRecurrente>>(emptyList())
-    val gastosRecurrentes: StateFlow<List<GastoRecurrente>> = _gastosRecurrentes
+    open val gastosRecurrentes: StateFlow<List<GastoRecurrente>> = _gastosRecurrentes
 
     /**
      * Mapa derivado: categoría → suma total de gastos (excluye ingresos).
@@ -130,7 +130,7 @@ class GastosViewModel : ViewModel() {
      *   de que la UI deje de observarlo, evitando recálculos innecesarios en
      *   rotaciones de pantalla rápidas.
      */
-    val gastosPorCategoria: StateFlow<Map<String, Double>> = _gastos
+    open val gastosPorCategoria: StateFlow<Map<String, Double>> = _gastos
         .map { lista ->
             lista.filter { it.tipo == "GASTO" }
                 .groupBy { it.categoria.ifBlank { "Sin categoría" } }
@@ -143,7 +143,7 @@ class GastosViewModel : ViewModel() {
      * el mensaje para evitar que se repita en recomposiciones.
      */
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    open val error: StateFlow<String?> = _error
 
     /**
      * Referencias a los tres listeners activos de Firestore.
@@ -182,11 +182,11 @@ class GastosViewModel : ViewModel() {
      * Se combina con [_fechaFin] para calcular [gastosFiltrados].
      */
     private val _fechaInicio = MutableStateFlow<Date?>(null)
-    val fechaInicio: StateFlow<Date?> = _fechaInicio
+    open val fechaInicio: StateFlow<Date?> = _fechaInicio
 
     /** Fecha de fin del filtro activo. Null = sin límite superior. */
     private val _fechaFin = MutableStateFlow<Date?>(null)
-    val fechaFin: StateFlow<Date?> = _fechaFin
+    open val fechaFin: StateFlow<Date?> = _fechaFin
 
     /**
      * Lista de gastos filtrada por el rango [_fechaInicio] — [_fechaFin].
@@ -197,7 +197,7 @@ class GastosViewModel : ViewModel() {
      * NOTA: El parseo de fecha usa runCatching para ignorar entradas con formato
      * incorrecto (return@filter false) sin lanzar excepciones que rompan el flow.
      */
-    val gastosFiltrados: StateFlow<List<Gasto>> = combine(
+    open val gastosFiltrados: StateFlow<List<Gasto>> = combine(
         _gastos, _fechaInicio, _fechaFin
     ) { gastos, inicio, fin ->
         if (inicio == null && fin == null) {
