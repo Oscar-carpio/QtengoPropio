@@ -17,6 +17,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Pantalla para añadir un nuevo artículo al inventario del hogar.
+// Valida nombre, cantidad, stock mínimo y fecha de caducidad antes de guardar.
 @Composable
 fun AddInventarioScreen(
     onItemGuardado: () -> Unit,
@@ -28,8 +30,11 @@ fun AddInventarioScreen(
     var minStock by remember { mutableStateOf("1") }
     var notas by remember { mutableStateOf("") }
     var fechaCaducidad by remember { mutableStateOf("") }
+
+    // Controla si se muestra el campo de fecha de caducidad
     var tieneFechaCaducidad by remember { mutableStateOf(false) }
 
+    // Mensajes de error por campo — cadena vacía = sin error
     var errorNombre by remember { mutableStateOf("") }
     var errorCantidad by remember { mutableStateOf("") }
     var errorMinStock by remember { mutableStateOf("") }
@@ -38,6 +43,7 @@ fun AddInventarioScreen(
     val ubicaciones = listOf("Cocina", "Despensa", "Lavadero", "Trastero", "Baño", "Otros")
     var ubicacionSeleccionada by remember { mutableStateOf("Cocina") }
 
+    // isLenient = false para rechazar fechas inválidas como "32/01/2025"
     val sdf = remember { SimpleDateFormat("dd/MM/yyyy", Locale("es", "ES")).apply { isLenient = false } }
 
     Column(
@@ -45,6 +51,7 @@ fun AddInventarioScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
+        // Cabecera con título y botón de volver
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -75,6 +82,7 @@ fun AddInventarioScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Campo nombre — obligatorio
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it; errorNombre = "" },
@@ -90,16 +98,16 @@ fun AddInventarioScreen(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // FIX WARN — validamos que cantidad sea un entero positivo
+                // Campo cantidad — debe ser un entero mayor que 0
                 OutlinedTextField(
                     value = cantidad,
                     onValueChange = {
                         cantidad = it
                         errorCantidad = when {
-                            it.isBlank() -> ""
+                            it.isBlank()            -> ""
                             it.toIntOrNull() == null -> "Solo números enteros"
-                            it.toInt() <= 0 -> "Debe ser mayor que 0"
-                            else -> ""
+                            it.toInt() <= 0          -> "Debe ser mayor que 0"
+                            else                     -> ""
                         }
                     },
                     label = { Text("Cantidad") },
@@ -112,16 +120,17 @@ fun AddInventarioScreen(
                             Text(errorCantidad, color = MaterialTheme.colorScheme.error)
                     }
                 )
-                //  — validamos que minStock sea un entero no negativo
+
+                // Campo stock mínimo — debe ser un entero no negativo
                 OutlinedTextField(
                     value = minStock,
                     onValueChange = {
                         minStock = it
                         errorMinStock = when {
-                            it.isBlank() -> ""
+                            it.isBlank()            -> ""
                             it.toIntOrNull() == null -> "Solo números enteros"
-                            it.toInt() < 0 -> "No puede ser negativo"
-                            else -> ""
+                            it.toInt() < 0           -> "No puede ser negativo"
+                            else                     -> ""
                         }
                     },
                     label = { Text("Stock Mín.") },
@@ -136,6 +145,7 @@ fun AddInventarioScreen(
                 )
             }
 
+            // Campo notas — opcional
             OutlinedTextField(
                 value = notas,
                 onValueChange = { notas = it },
@@ -145,6 +155,8 @@ fun AddInventarioScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            // Switch para activar el campo de fecha de caducidad
+            // Al desactivarlo limpiamos la fecha y el error
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -165,8 +177,9 @@ fun AddInventarioScreen(
                 )
             }
 
+            // Campo fecha de caducidad — solo visible si el switch está activado
+            // Valida el formato dd/MM/yyyy en tiempo real con isLenient = false
             if (tieneFechaCaducidad) {
-                // FIX WARN — validamos formato de fecha de caducidad
                 OutlinedTextField(
                     value = fechaCaducidad,
                     onValueChange = {
@@ -197,6 +210,7 @@ fun AddInventarioScreen(
                 color = Color(0xFF1A3A6B)
             )
 
+            // Chips de ubicación organizados en filas de 3
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ubicaciones.chunked(3).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -217,6 +231,7 @@ fun AddInventarioScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Botón guardar — valida todos los campos antes de llamar al ViewModel
             Button(
                 onClick = {
                     var valido = true
@@ -235,6 +250,7 @@ fun AddInventarioScreen(
                         errorMinStock = "Introduce un stock mínimo válido"; valido = false
                     }
 
+                    // Solo validamos la fecha si el switch está activo y tiene contenido
                     if (tieneFechaCaducidad && fechaCaducidad.isNotBlank()) {
                         val fechaOk = runCatching { sdf.parse(fechaCaducidad) }.isSuccess
                         if (!fechaOk) {
@@ -249,6 +265,7 @@ fun AddInventarioScreen(
                             ubicacion = ubicacionSeleccionada,
                             minStock = minStockInt,
                             notas = notas.trim(),
+                            // Si el campo está vacío guardamos null — el ViewModel no incluye el campo en Firestore
                             fechaCaducidad = fechaCaducidad.ifBlank { null }
                         )
                         onItemGuardado()

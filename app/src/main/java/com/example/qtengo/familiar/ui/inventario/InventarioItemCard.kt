@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Tarjeta que representa un artículo del inventario del hogar.
+// Si el stock está por debajo del mínimo se resalta en naranja con aviso de stock bajo.
+// Incluye acceso directo a Amazon para buscar el artículo.
 @Composable
 fun InventarioItemCard(
     item: InventarioItem,
@@ -26,6 +29,8 @@ fun InventarioItemCard(
     onEdit: (InventarioItem) -> Unit
 ) {
     val context = LocalContext.current
+
+    // true cuando el stock actual es igual o inferior al mínimo configurado
     val bajoDeMínimos = item.cantidad <= item.minStock
 
     Card(
@@ -33,6 +38,7 @@ fun InventarioItemCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(14.dp),
+        // Fondo naranja claro si el stock está bajo, blanco si está en niveles normales
         colors = CardDefaults.cardColors(
             containerColor = if (bajoDeMínimos) Color(0xFFFFF3E0) else Color.White
         ),
@@ -42,6 +48,7 @@ fun InventarioItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icono de caja — naranja si stock bajo, azul si normal
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -53,7 +60,9 @@ fun InventarioItemCard(
             ) {
                 Text(text = "📦", fontSize = 20.sp)
             }
+
             Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.nombre,
@@ -61,14 +70,17 @@ fun InventarioItemCard(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A3A6B)
                 )
+                // Ubicación y fecha de caducidad en la misma línea si existe
                 Text(
                     text = "${item.ubicacion}${if (item.fechaCaducidad != null) " · Cad: ${item.fechaCaducidad}" else ""}",
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
+                // Notas — solo se muestran si tienen contenido
                 if (item.notas.isNotBlank()) {
                     Text(text = item.notas, fontSize = 11.sp, color = Color.Gray)
                 }
+                // Aviso de stock bajo con el umbral mínimo configurado
                 if (bajoDeMínimos) {
                     Text(
                         text = "⚠️ Stock bajo (mín. ${item.minStock})",
@@ -78,6 +90,8 @@ fun InventarioItemCard(
                     )
                 }
             }
+
+            // Badge con la cantidad actual — naranja si stock bajo, azul si normal
             Box(
                 modifier = Modifier
                     .background(
@@ -93,9 +107,10 @@ fun InventarioItemCard(
                     color = if (bajoDeMínimos) Color(0xFFF57C00) else Color(0xFF1A3A6B)
                 )
             }
+
             Spacer(modifier = Modifier.width(4.dp))
 
-            // Botón Amazon — abre búsqueda del artículo en el navegador
+            // Botón Amazon — abre el navegador con una búsqueda del artículo en Amazon.es
             IconButton(onClick = {
                 val query = Uri.encode(item.nombre)
                 val url = "https://www.amazon.es/s?k=$query"
@@ -105,10 +120,11 @@ fun InventarioItemCard(
                 Icon(
                     imageVector = Icons.Default.ShoppingCart,
                     contentDescription = "Buscar en Amazon",
-                    tint = Color(0xFFFF9900)
+                    tint = Color(0xFFFF9900) // Naranja Amazon
                 )
             }
 
+            // Botón editar
             IconButton(onClick = { onEdit(item) }) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -117,6 +133,7 @@ fun InventarioItemCard(
                 )
             }
 
+            // Botón eliminar
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,

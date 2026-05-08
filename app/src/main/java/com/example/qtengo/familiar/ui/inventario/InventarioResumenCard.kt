@@ -11,11 +11,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Fila de tres tarjetas resumen del inventario:
+// total de artículos distintos, total de unidades en stock y artículos con fecha de caducidad.
 @Composable
 fun InventarioResumenCard(
-    totalArticulos: Int,
-    totalUnidades: Int,
-    totalConFecha: Int
+    totalArticulos: Int,  // Número de artículos distintos en el inventario
+    totalUnidades: Int,   // Suma de todas las cantidades
+    totalConFecha: Int    // Artículos que tienen fecha de caducidad registrada
 ) {
     Row(
         modifier = Modifier
@@ -23,6 +25,7 @@ fun InventarioResumenCard(
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Tarjeta: total de artículos distintos
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
@@ -45,6 +48,8 @@ fun InventarioResumenCard(
                 )
             }
         }
+
+        // Tarjeta: suma total de unidades en stock
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
@@ -67,6 +72,8 @@ fun InventarioResumenCard(
                 )
             }
         }
+
+        // Tarjeta: artículos con fecha de caducidad registrada
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),

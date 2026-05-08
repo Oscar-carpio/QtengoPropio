@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+// Pantalla principal del módulo de tareas.
+// Muestra un resumen con contadores y la lista dividida en pendientes y completadas.
+// Permite crear, editar, completar y eliminar tareas.
 @Composable
 fun TareasScreen(
     onBack: () -> Unit,
@@ -22,16 +25,20 @@ fun TareasScreen(
 ) {
     val tareas by viewModel.tareas.collectAsState()
 
+    // Control de visibilidad de los diálogos
     var showNuevaTareaDialog by remember { mutableStateOf(false) }
     var tareaAEditar by remember { mutableStateOf<Tarea?>(null) }
 
+    // Dividimos las tareas en dos grupos para mostrarlas en secciones separadas
     val tareasPendientes = tareas.filter { !it.completada }
     val tareasCompletadas = tareas.filter { it.completada }
 
+    // Cargamos las tareas una sola vez al entrar en la pantalla
     LaunchedEffect(Unit) {
         viewModel.cargarTareas()
     }
 
+    // Diálogo para crear una nueva tarea
     if (showNuevaTareaDialog) {
         NuevaTareaDialog(
             onConfirm = { titulo, descripcion, fecha, prioridad ->
@@ -42,6 +49,7 @@ fun TareasScreen(
         )
     }
 
+    // Diálogo para editar una tarea existente — solo visible cuando tareaAEditar no es null
     tareaAEditar?.let { tarea ->
         EditarTareaDialog(
             tarea = tarea,
@@ -58,7 +66,7 @@ fun TareasScreen(
             .fillMaxSize()
             .background(Color(0xFFF4F7FB))
     ) {
-        // Header
+        // Cabecera con título y contadores de pendientes/completadas
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,13 +94,14 @@ fun TareasScreen(
             }
         }
 
-        // Resumen
+        // Fila de tres tarjetas resumen: pendientes, completadas y urgentes (Alta prioridad)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Tarjeta: tareas pendientes
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -115,6 +124,8 @@ fun TareasScreen(
                     )
                 }
             }
+
+            // Tarjeta: tareas completadas
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -137,6 +148,8 @@ fun TareasScreen(
                     )
                 }
             }
+
+            // Tarjeta: tareas pendientes con prioridad Alta
             Card(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -162,6 +175,7 @@ fun TareasScreen(
         }
 
         if (tareas.isEmpty()) {
+            // Estado vacío
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,10 +185,12 @@ fun TareasScreen(
                 Text("No hay tareas. ¡Añade una!", color = Color.Gray)
             }
         } else {
+            // Lista dividida en secciones: primero pendientes, luego completadas
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
+                // Sección tareas pendientes
                 if (tareasPendientes.isNotEmpty()) {
                     item {
                         Text(
@@ -195,6 +211,7 @@ fun TareasScreen(
                     }
                 }
 
+                // Sección tareas completadas
                 if (tareasCompletadas.isNotEmpty()) {
                     item {
                         Text(
@@ -217,6 +234,7 @@ fun TareasScreen(
             }
         }
 
+        // Botón para abrir el diálogo de nueva tarea
         Button(
             onClick = { showNuevaTareaDialog = true },
             modifier = Modifier
