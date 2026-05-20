@@ -59,12 +59,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Habilitamos el modo de borde a borde
         enableEdgeToEdge()
 
         setContent {
             QtengoTheme {
-                // Surface con safeDrawingPadding para respetar notch y barra de navegación
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
@@ -186,14 +184,14 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // --- Navegación perfil Familiar ---
-                        perfilActivo == "Familiar" -> {
+                        perfilActivo == Rutas.FAMILIAR -> {
                             when (currentScreen) {
                                 "" -> FamiliarHomeScreen(
                                     onMenuSelected = { currentScreen = it },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Lista de la compra" -> {
+                                Rutas.LISTA_COMPRA -> {
                                     if (selectedShoppingList.value == null) {
                                         ShoppingListScreen(
                                             onListSelected = { selectedShoppingList.value = it },
@@ -206,7 +204,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 }
-                                "Control de gastos" -> {
+                                Rutas.CONTROL_GASTOS -> {
                                     if (!showAddGasto) {
                                         GastosScreen(
                                             onAddGasto = { showAddGasto = true },
@@ -219,7 +217,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 }
-                                "Inventario del hogar" -> {
+                                Rutas.INVENTARIO_HOGAR -> {
                                     if (!showAddInventario) {
                                         InventarioScreen(
                                             onAddItem = { showAddInventario = true },
@@ -232,43 +230,43 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 }
-                                "Tareas y recordatorios" -> TareasScreen(onBack = { currentScreen = "" })
+                                Rutas.TAREAS_RECORDATORIOS -> TareasScreen(onBack = { currentScreen = "" })
                                 else -> currentScreen = ""
                             }
                         }
 
                         // --- Navegación perfil Pyme ---
-                        perfilActivo == "Pyme" -> {
+                        perfilActivo == Rutas.PYME -> {
                             when (currentScreen) {
                                 "" -> PymeInicioPantalla(
                                     onMenuSelected = { currentScreen = it },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Productos / Stock" -> ProductosPantalla(
-                                    profile = "PYME",
+                                Rutas.PRODUCTOS_STOCK -> ProductosPantalla(
+                                    profile = Rutas.PYME,
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Gastos e ingresos" -> FinanzasPantalla(
+                                Rutas.GASTOS_INGRESOS -> FinanzasPantalla(
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Proveedores" -> ProveedoresPantalla(
-                                    profile = "PYME",
+                                Rutas.PROVEEDORES -> ProveedoresPantalla(
+                                    profile = Rutas.PYME,
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Empleados" -> EmpleadosPantalla(
-                                    profile = "PYME",
+                                Rutas.EMPLEADOS -> EmpleadosPantalla(
+                                    profile = Rutas.PYME,
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Agenda de Tareas" -> TareasPantalla(
+                                Rutas.AGENDA_TAREAS -> TareasPantalla(
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
@@ -278,25 +276,25 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // --- Navegación perfil Restauración ---
-                        perfilActivo == "Restauración" -> {
+                        perfilActivo == Rutas.RESTAURACION -> {
                             when (currentScreen) {
                                 "" -> RestauracionHomeScreen(
                                     onMenuSelected = { currentScreen = it },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Carta / Menú del día" -> CartaScreen(
+                                Rutas.CARTA_MENU -> CartaScreen(
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Stock de cocina" -> StockCocinaScreen(
+                                Rutas.STOCK_COCINA -> StockCocinaScreen(
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
                                 )
-                                "Reservas" -> ReservasScreen(onBack = { currentScreen = "" })
-                                "Proveedores" -> ProveedoresRestauracionScreen(
+                                Rutas.RESERVAS -> ReservasScreen(onBack = { currentScreen = "" })
+                                Rutas.PROVEEDORES -> ProveedoresRestauracionScreen(
                                     onBack = { currentScreen = "" },
                                     onLogout = { cerrarSesion() },
                                     onChangeProfile = { cambiarPerfil() }
@@ -335,22 +333,17 @@ fun SelectorPerfilScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Título del selector
         Text(
             text = stringResource(R.string.selector_perfil_titulo),
             style = MaterialTheme.typography.headlineSmall
         )
         Spacer(modifier = Modifier.height(8.dp))
-
-        // Subtítulo informativo
         Text(
             text = stringResource(R.string.selector_perfil_subtitulo),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(32.dp))
-
-        // Botón por cada perfil disponible
         perfiles.forEach { perfil ->
             Button(
                 onClick = { onPerfilSeleccionado(perfil) },
@@ -362,10 +355,7 @@ fun SelectorPerfilScreen(
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Opción para cerrar sesión
         TextButton(onClick = onCerrarSesion) {
             Text(stringResource(R.string.cerrar_sesion))
         }
