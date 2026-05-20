@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">qtengo</string>
+    <string name="app_name">Qtengo</string>
+
+    <!-- Login -->
+    <string name="iniciar_sesion">Iniciar sesión</string>
+    <string name="email">Email</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="recordar_contrasena">Recordar contraseña</string>
+    <string name="entrar">Entrar</string>
+    <string name="no_tienes_cuenta">¿No tienes cuenta? Regístrate</string>
+
+    <!-- Registro -->
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="nombre">Nombre</string>
+    <string name="apellidos">Apellidos</string>
+    <string name="contrasena_requisitos">Mínimo 8 caracteres, una mayúscula y un número</string>
+    <string name="selecciona_perfiles">Selecciona tus perfiles</string>
+    <string name="puedes_elegir_mas">Puedes elegir más de uno</string>
+    <string name="registrarse">Registrarse</string>
+    <string name="ya_tienes_cuenta">¿Ya tienes cuenta? Inicia sesión</string>
+
+    <!-- General -->
+    <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="cambiar_perfil">Cambiar perfil</string>
+    <string name="perfil_no_reconocido">Perfil no reconocido</string>
+    <string name="selector_perfil_titulo">¿Con qué perfil quieres entrar?</string>
+    <string name="selector_perfil_subtitulo">Puedes cambiar de perfil en cualquier momento desde el menú</string>
 </resources>

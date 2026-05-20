@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.qtengo.login.ui.LoginScreen
@@ -27,16 +28,12 @@ import com.example.qtengo.familiar.ui.gastos.AddGastoScreen
 import com.example.qtengo.familiar.ui.inventario.InventarioScreen
 import com.example.qtengo.familiar.ui.inventario.AddInventarioScreen
 import com.example.qtengo.familiar.ui.tareas.TareasScreen
-
-
-
 import com.example.qtengo.pyme.ui.PymeInicioPantalla
 import com.example.qtengo.pyme.ui.proveedores.ProveedoresPantalla
 import com.example.qtengo.pyme.ui.productos.ProductosPantalla
 import com.example.qtengo.pyme.ui.tareas.TareasPantalla
 import com.example.qtengo.pyme.ui.finanzas.FinanzasPantalla
 import com.example.qtengo.pyme.ui.empleados.EmpleadosPantalla
-
 import com.example.qtengo.core.ui.theme.QtengoTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -49,11 +46,10 @@ import com.example.qtengo.restauracion.ui.home.RestauracionHomeScreen
 import com.example.qtengo.restauracion.ui.reservas.RestauracionReserva
 import com.example.qtengo.restauracion.ui.proveedores.Proveedor
 
-
-
-
 /**
  * Actividad principal que gestiona la navegación de la aplicación Q-Tengo.
+ * Controla el estado de autenticación y redirige a la pantalla correspondiente
+ * según el perfil activo del usuario (Familiar, Pyme o Restauración).
  */
 class MainActivity : ComponentActivity() {
 
@@ -62,19 +58,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Habilitamos el modo de borde a borde pero configuraremos los paddings de seguridad
+
+        // Habilitamos el modo de borde a borde
         enableEdgeToEdge()
 
         setContent {
             QtengoTheme {
-                // Surface con safeDrawingPadding para evitar que el contenido quede bajo el NAV o el Notch
+                // Surface con safeDrawingPadding para respetar notch y barra de navegación
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .safeDrawingPadding(), // ESTA ES LA CLAVE: Respeta las barras del sistema
+                        .safeDrawingPadding(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Estados principales de sesión y navegación
                     var uid by remember { mutableStateOf<String?>(null) }
                     var perfiles by remember { mutableStateOf<List<String>>(emptyList()) }
                     var perfilActivo by remember { mutableStateOf<String?>(null) }
@@ -84,7 +81,7 @@ class MainActivity : ComponentActivity() {
                     var showAddGasto by remember { mutableStateOf(false) }
                     var showAddInventario by remember { mutableStateOf(false) }
 
-                    // --- Permiso de notificaciones ---
+                    // --- Gestión de permiso de notificaciones (Android 13+) ---
                     val permisoConcedido = remember {
                         mutableStateOf(
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -99,13 +96,14 @@ class MainActivity : ComponentActivity() {
                         contract = ActivityResultContracts.RequestPermission()
                     ) { concedido -> permisoConcedido.value = concedido }
 
+                    // Solicitar permiso de notificaciones al iniciar si no está concedido
                     LaunchedEffect(Unit) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !permisoConcedido.value) {
                             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                     }
 
-                    // Comprobar sesión activa
+                    // Comprobar si hay sesión activa al iniciar la app
                     LaunchedEffect(Unit) {
                         val currentUser = auth.currentUser
                         if (currentUser != null) {
@@ -127,6 +125,7 @@ class MainActivity : ComponentActivity() {
                                 if (perfilesRecuperados.isNotEmpty()) {
                                     uid = currentUser.uid
                                     perfiles = perfilesRecuperados
+                                    // Si solo hay un perfil, lo activamos directamente
                                     if (perfilesRecuperados.size == 1) {
                                         perfilActivo = perfilesRecuperados.first()
                                     }
@@ -139,6 +138,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
+                    // Cierra la sesión y resetea todos los estados
                     fun cerrarSesion() {
                         auth.signOut()
                         uid = null
@@ -147,12 +147,15 @@ class MainActivity : ComponentActivity() {
                         currentScreen = ""
                     }
 
+                    // Vuelve al selector de perfiles sin cerrar sesión
                     fun cambiarPerfil() {
                         perfilActivo = null
                         currentScreen = ""
                     }
 
+                    // --- Árbol de navegación principal ---
                     when {
+                        // Mostrar pantalla de registro
                         uid == null && mostrarRegistro -> RegisterScreen(
                             onRegistroExitoso = { nuevoUid, nuevosPerfiles ->
                                 uid = nuevoUid
@@ -163,6 +166,7 @@ class MainActivity : ComponentActivity() {
                             onIrALogin = { mostrarRegistro = false }
                         )
 
+                        // Mostrar pantalla de login
                         uid == null -> LoginScreen(
                             onLoginExitoso = { nuevoUid, nuevosPerfiles ->
                                 uid = nuevoUid
@@ -172,6 +176,7 @@ class MainActivity : ComponentActivity() {
                             onIrARegistro = { mostrarRegistro = true }
                         )
 
+                        // Mostrar selector de perfil si hay más de uno
                         uid != null && perfilActivo == null -> {
                             SelectorPerfilScreen(
                                 perfiles = perfiles,
@@ -180,28 +185,51 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        // --- Navegación perfil Familiar ---
                         perfilActivo == "Familiar" -> {
                             when (currentScreen) {
-                                "" -> FamiliarHomeScreen(onMenuSelected = { currentScreen = it }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
+                                "" -> FamiliarHomeScreen(
+                                    onMenuSelected = { currentScreen = it },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
                                 "Lista de la compra" -> {
                                     if (selectedShoppingList.value == null) {
-                                        ShoppingListScreen(onListSelected = { selectedShoppingList.value = it }, onBack = { currentScreen = "" })
+                                        ShoppingListScreen(
+                                            onListSelected = { selectedShoppingList.value = it },
+                                            onBack = { currentScreen = "" }
+                                        )
                                     } else {
-                                        ShoppingListDetailScreen(shoppingList = selectedShoppingList.value!!, onBack = { selectedShoppingList.value = null })
+                                        ShoppingListDetailScreen(
+                                            shoppingList = selectedShoppingList.value!!,
+                                            onBack = { selectedShoppingList.value = null }
+                                        )
                                     }
                                 }
                                 "Control de gastos" -> {
                                     if (!showAddGasto) {
-                                        GastosScreen(onAddGasto = { showAddGasto = true }, onBack = { currentScreen = "" })
+                                        GastosScreen(
+                                            onAddGasto = { showAddGasto = true },
+                                            onBack = { currentScreen = "" }
+                                        )
                                     } else {
-                                        AddGastoScreen(onGastoGuardado = { showAddGasto = false }, onBack = { showAddGasto = false })
+                                        AddGastoScreen(
+                                            onGastoGuardado = { showAddGasto = false },
+                                            onBack = { showAddGasto = false }
+                                        )
                                     }
                                 }
                                 "Inventario del hogar" -> {
                                     if (!showAddInventario) {
-                                        InventarioScreen(onAddItem = { showAddInventario = true }, onBack = { currentScreen = "" })
+                                        InventarioScreen(
+                                            onAddItem = { showAddInventario = true },
+                                            onBack = { currentScreen = "" }
+                                        )
                                     } else {
-                                        AddInventarioScreen(onItemGuardado = { showAddInventario = false }, onBack = { showAddInventario = false })
+                                        AddInventarioScreen(
+                                            onItemGuardado = { showAddInventario = false },
+                                            onBack = { showAddInventario = false }
+                                        )
                                     }
                                 }
                                 "Tareas y recordatorios" -> TareasScreen(onBack = { currentScreen = "" })
@@ -209,31 +237,78 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
+                        // --- Navegación perfil Pyme ---
                         perfilActivo == "Pyme" -> {
                             when (currentScreen) {
-                                "" -> PymeInicioPantalla(onMenuSelected = { currentScreen = it }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Productos / Stock" -> ProductosPantalla(profile = "PYME", onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Gastos e ingresos" -> FinanzasPantalla(onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Proveedores" -> ProveedoresPantalla(profile = "PYME", onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Empleados" -> EmpleadosPantalla(profile = "PYME", onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Agenda de Tareas" -> TareasPantalla(onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
+                                "" -> PymeInicioPantalla(
+                                    onMenuSelected = { currentScreen = it },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Productos / Stock" -> ProductosPantalla(
+                                    profile = "PYME",
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Gastos e ingresos" -> FinanzasPantalla(
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Proveedores" -> ProveedoresPantalla(
+                                    profile = "PYME",
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Empleados" -> EmpleadosPantalla(
+                                    profile = "PYME",
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Agenda de Tareas" -> TareasPantalla(
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
                                 else -> currentScreen = ""
                             }
                         }
 
+                        // --- Navegación perfil Restauración ---
                         perfilActivo == "Restauración" -> {
                             when (currentScreen) {
-                                "" -> RestauracionHomeScreen(onMenuSelected = { currentScreen = it }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Carta / Menú del día" -> CartaScreen(onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
-                                "Stock de cocina" -> StockCocinaScreen(onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
+                                "" -> RestauracionHomeScreen(
+                                    onMenuSelected = { currentScreen = it },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Carta / Menú del día" -> CartaScreen(
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
+                                "Stock de cocina" -> StockCocinaScreen(
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
                                 "Reservas" -> ReservasScreen(onBack = { currentScreen = "" })
-                                "Proveedores" -> ProveedoresRestauracionScreen(onBack = { currentScreen = "" }, onLogout = { cerrarSesion() }, onChangeProfile = { cambiarPerfil() })
+                                "Proveedores" -> ProveedoresRestauracionScreen(
+                                    onBack = { currentScreen = "" },
+                                    onLogout = { cerrarSesion() },
+                                    onChangeProfile = { cambiarPerfil() }
+                                )
                                 else -> currentScreen = ""
                             }
                         }
+
+                        // Perfil no reconocido — caso de seguridad
                         else -> {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Perfil no reconocido: $perfilActivo")
+                                Text(stringResource(R.string.perfil_no_reconocido))
                             }
                         }
                     }
@@ -243,6 +318,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Pantalla de selección de perfil cuando el usuario tiene más de uno asignado.
+ * Permite elegir con qué perfil entrar o cerrar sesión directamente.
+ */
 @Composable
 fun SelectorPerfilScreen(
     perfiles: List<String>,
@@ -250,23 +329,45 @@ fun SelectorPerfilScreen(
     onCerrarSesion: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "¿Con qué perfil quieres entrar?", style = MaterialTheme.typography.headlineSmall)
+        // Título del selector
+        Text(
+            text = stringResource(R.string.selector_perfil_titulo),
+            style = MaterialTheme.typography.headlineSmall
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Puedes cambiar de perfil en cualquier momento desde el menú", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        // Subtítulo informativo
+        Text(
+            text = stringResource(R.string.selector_perfil_subtitulo),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(modifier = Modifier.height(32.dp))
+
+        // Botón por cada perfil disponible
         perfiles.forEach { perfil ->
-            Button(onClick = { onPerfilSeleccionado(perfil) }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+            Button(
+                onClick = { onPerfilSeleccionado(perfil) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
                 Text(perfil, style = MaterialTheme.typography.bodyLarge)
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Opción para cerrar sesión
         TextButton(onClick = onCerrarSesion) {
-            Text("Cerrar sesión")
+            Text(stringResource(R.string.cerrar_sesion))
         }
     }
 }
