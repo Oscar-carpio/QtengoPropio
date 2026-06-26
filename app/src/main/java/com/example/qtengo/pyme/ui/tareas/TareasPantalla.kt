@@ -26,7 +26,7 @@ import com.example.qtengo.core.domain.models.Task
 import com.example.qtengo.pyme.ui.DialogoConfirmarEliminar
 import com.example.qtengo.pyme.ui.TarjetaEstadisticaPyme
 import com.example.qtengo.core.ui.components.QtengoTopBar
-import com.example.qtengo.core.ui.screens.TaskViewModel
+import com.example.qtengo.core.ui.viewmodels.TaskViewModel
 import com.example.qtengo.pyme.ui.filtros.FiltrosTareas
 import java.text.SimpleDateFormat
 import java.util.*

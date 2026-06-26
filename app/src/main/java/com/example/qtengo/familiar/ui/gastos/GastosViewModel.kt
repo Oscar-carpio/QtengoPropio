@@ -43,8 +43,9 @@ data class GastoRecurrente(
 )
 
 // ViewModel que gestiona gastos, ingresos, recurrentes y presupuesto del usuario.
+// Marcada como open para permitir su uso en tests mediante FakeGastosViewModel.
 // Todas las operaciones requieren usuario autenticado (ver requireUid).
-class GastosViewModel : ViewModel() {
+open class GastosViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
@@ -53,22 +54,22 @@ class GastosViewModel : ViewModel() {
     private val sdf = SimpleDateFormat("dd/MM/yyyy", Locale("es", "ES"))
 
     private val _gastos = MutableStateFlow<List<Gasto>>(emptyList())
-    val gastos: StateFlow<List<Gasto>> = _gastos
+    open val gastos: StateFlow<List<Gasto>> = _gastos
 
     // null si el usuario aún no ha configurado un presupuesto mensual
     private val _presupuesto = MutableStateFlow<Double?>(null)
-    val presupuesto: StateFlow<Double?> = _presupuesto
+    open val presupuesto: StateFlow<Double?> = _presupuesto
 
     // true mientras hay una operación de escritura en curso — la UI debe bloquear botones
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    open val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _gastosRecurrentes = MutableStateFlow<List<GastoRecurrente>>(emptyList())
-    val gastosRecurrentes: StateFlow<List<GastoRecurrente>> = _gastosRecurrentes
+    open val gastosRecurrentes: StateFlow<List<GastoRecurrente>> = _gastosRecurrentes
 
     // Mapa derivado: categoría → suma total de gastos del mes
     // Se recalcula automáticamente cada vez que cambia _gastos
-    val gastosPorCategoria: StateFlow<Map<String, Double>> = _gastos
+    open val gastosPorCategoria: StateFlow<Map<String, Double>> = _gastos
         .map { lista ->
             lista.filter { it.tipo == "GASTO" }
                 .groupBy { it.categoria.ifBlank { "Sin categoría" } }
@@ -77,7 +78,7 @@ class GastosViewModel : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    open val error: StateFlow<String?> = _error
 
     // Los tres listeners deben cancelarse en onCleared() para evitar fugas de memoria
     private var gastosListener: ListenerRegistration? = null
@@ -101,14 +102,14 @@ class GastosViewModel : ViewModel() {
 
     // null = sin límite en ese extremo del rango
     private val _fechaInicio = MutableStateFlow<Date?>(null)
-    val fechaInicio: StateFlow<Date?> = _fechaInicio
+    open val fechaInicio: StateFlow<Date?> = _fechaInicio
 
     private val _fechaFin = MutableStateFlow<Date?>(null)
-    val fechaFin: StateFlow<Date?> = _fechaFin
+    open val fechaFin: StateFlow<Date?> = _fechaFin
 
     // Lista filtrada por rango de fechas — se recalcula automáticamente al cambiar gastos o fechas
     // Si ambas fechas son null devuelve la lista completa
-    val gastosFiltrados: StateFlow<List<Gasto>> = combine(
+    open val gastosFiltrados: StateFlow<List<Gasto>> = combine(
         _gastos, _fechaInicio, _fechaFin
     ) { gastos, inicio, fin ->
         if (inicio == null && fin == null) {

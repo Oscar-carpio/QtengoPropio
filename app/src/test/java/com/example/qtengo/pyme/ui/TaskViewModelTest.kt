@@ -6,7 +6,7 @@ import com.example.qtengo.core.data.repositories.FinanceRepository
 import com.example.qtengo.core.data.repositories.StockMovementRepository
 import com.example.qtengo.core.data.repositories.TaskRepository
 import com.example.qtengo.core.domain.models.Task
-import com.example.qtengo.core.ui.screens.TaskViewModel
+import com.example.qtengo.core.ui.viewmodels.TaskViewModel
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk

@@ -2,6 +2,7 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.qtengo.data.model.restauracion.RestauracionProducto // ← AÑADIR ESTE IMPORT
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,14 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-data class RestauracionProducto(
-    val id_producto: String = "",
-    val nombre: String = "",
-    val categoria: String = "",
-    val stock: Int = 0,
-    val stock_minimo: Int = 0,
-    val precio: Double = 0.0
-)
+// RestauracionProducto se define en data/model/restauracion/RestauracionEntities.kt
+// No se redefine aquí para evitar duplicados
 
 class InventarioRestauracionViewModel : ViewModel() {
 
@@ -55,12 +50,12 @@ class InventarioRestauracionViewModel : ViewModel() {
             }
             _items.value = snapshot?.documents?.map { doc ->
                 RestauracionProducto(
-                    id_producto = doc.id,
-                    nombre = doc.getString("nombre") ?: "",
-                    categoria = doc.getString("categoria") ?: "",
-                    stock = (doc.getLong("stock") ?: 0L).toInt(),
+                    id_producto  = doc.id,
+                    nombre       = doc.getString("nombre") ?: "",
+                    categoria    = doc.getString("categoria") ?: "",
+                    stock        = (doc.getLong("stock") ?: 0L).toInt(),
                     stock_minimo = (doc.getLong("stock_minimo") ?: 0L).toInt(),
-                    precio = doc.getDouble("precio") ?: 0.0
+                    precio       = doc.getDouble("precio") ?: 0.0
                 )
             } ?: emptyList()
         }
@@ -72,28 +67,46 @@ class InventarioRestauracionViewModel : ViewModel() {
         if (precio < 0) { _error.value = "El precio no puede ser negativo"; return }
         viewModelScope.launch {
             try {
-                val data = hashMapOf("nombre" to nombre.trim(), "categoria" to categoria.trim(), "stock" to stock, "stock_minimo" to stockMinimo, "precio" to precio)
+                val data = hashMapOf(
+                    "nombre"      to nombre.trim(),
+                    "categoria"   to categoria.trim(),
+                    "stock"       to stock,
+                    "stock_minimo" to stockMinimo,
+                    "precio"      to precio
+                )
                 inventarioRef(uid).add(data).await()
-            } catch (e: Exception) { _error.value = "Error al agregar producto: ${e.message}" }
+            } catch (e: Exception) {
+                _error.value = "Error al agregar producto: ${e.message}"
+            }
         }
     }
 
     fun eliminarItem(idProducto: String) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
-            try { inventarioRef(uid).document(idProducto).delete().await() }
-            catch (e: Exception) { _error.value = "Error al eliminar: ${e.message}" }
+            try {
+                inventarioRef(uid).document(idProducto).delete().await()
+            } catch (e: Exception) {
+                _error.value = "Error al eliminar: ${e.message}"
+            }
         }
     }
 
     fun actualizarStock(idProducto: String, nuevoStock: Int) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
-            try { inventarioRef(uid).document(idProducto).update("stock", nuevoStock.coerceAtLeast(0)).await() }
-            catch (e: Exception) { _error.value = "Error al actualizar stock: ${e.message}" }
+            try {
+                inventarioRef(uid).document(idProducto)
+                    .update("stock", nuevoStock.coerceAtLeast(0)).await()
+            } catch (e: Exception) {
+                _error.value = "Error al actualizar stock: ${e.message}"
+            }
         }
     }
 
-    fun aumentarStock(producto: RestauracionProducto) = actualizarStock(producto.id_producto, producto.stock + 1)
-    fun disminuirStock(producto: RestauracionProducto) = actualizarStock(producto.id_producto, (producto.stock - 1).coerceAtLeast(0))
+    fun aumentarStock(producto: RestauracionProducto) =
+        actualizarStock(producto.id_producto, producto.stock + 1)
+
+    fun disminuirStock(producto: RestauracionProducto) =
+        actualizarStock(producto.id_producto, (producto.stock - 1).coerceAtLeast(0))
 }

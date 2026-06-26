@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.qtengo.data.model.restauracion.RestauracionProducto
 
 
 @OptIn(ExperimentalMaterial3Api::class)

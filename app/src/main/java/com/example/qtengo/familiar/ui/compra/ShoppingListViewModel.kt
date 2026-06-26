@@ -13,24 +13,21 @@ import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Modelo de una lista de la compra (el contenedor, no los productos)
 data class ShoppingList(
     val id: String = "",
     val name: String = "",
-    val itemCount: Int = 0, // Se actualiza manualmente con actualizarContador()
-    val date: String = ""   // Formato dd/MM/yyyy
+    val itemCount: Int = 0,
+    val date: String = ""
 )
 
-// Modelo de un producto dentro de una lista
 data class ShoppingItem(
     val id: String = "",
     val name: String = "",
-    val quantity: String = "", // Texto libre: "2 kg", "1 bote", etc.
+    val quantity: String = "",
     val price: Double = 0.0,
-    val isChecked: Boolean = false // true = ya está en el carrito
+    val isChecked: Boolean = false
 )
 
-// Modelo de un producto favorito para añadir rápido a cualquier lista
 data class FavoriteItem(
     val id: String = "",
     val name: String = "",
@@ -39,38 +36,34 @@ data class FavoriteItem(
 )
 
 // ViewModel que gestiona listas de la compra, productos y favoritos del usuario.
+// Marcada como open para permitir su uso en tests mediante clases fake.
 // Todas las operaciones requieren usuario autenticado (ver requireUid).
-class ShoppingListViewModel : ViewModel() {
+open class ShoppingListViewModel : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
     private val _lists = MutableStateFlow<List<ShoppingList>>(emptyList())
-    val lists: StateFlow<List<ShoppingList>> = _lists
+    open val lists: StateFlow<List<ShoppingList>> = _lists
 
-    // Solo hay una lista activa a la vez — cargarItems() reemplaza el listener anterior
     private val _items = MutableStateFlow<List<ShoppingItem>>(emptyList())
-    val items: StateFlow<List<ShoppingItem>> = _items
+    open val items: StateFlow<List<ShoppingItem>> = _items
 
     private val _favoritos = MutableStateFlow<List<FavoriteItem>>(emptyList())
-    val favoritos: StateFlow<List<FavoriteItem>> = _favoritos
+    open val favoritos: StateFlow<List<FavoriteItem>> = _favoritos
 
     private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    open val error: StateFlow<String?> = _error
 
-    // true mientras hay una operación de escritura en curso — la UI debe bloquear botones
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    open val isLoading: StateFlow<Boolean> = _isLoading
 
-    // Los tres listeners deben cancelarse en onCleared() para evitar fugas de memoria
     private var listasListener: ListenerRegistration? = null
     private var itemsListener: ListenerRegistration? = null
     private var favoritosListener: ListenerRegistration? = null
 
     fun clearError() { _error.value = null }
 
-    // Obtiene el uid del usuario en cada llamada para evitar valores obsoletos
-    // si la sesión expira mientras el ViewModel está activo
     private fun requireUid(): String? {
         val uid = auth.currentUser?.uid
         if (uid.isNullOrBlank()) {
@@ -80,17 +73,12 @@ class ShoppingListViewModel : ViewModel() {
         return uid
     }
 
-    // Referencias a las colecciones de Firestore del usuario
-    // usuarios/{uid}/listas y usuarios/{uid}/favoritos
     private fun listasRef(uid: String) =
         db.collection("usuarios").document(uid).collection("listas")
 
     private fun favoritosRef(uid: String) =
         db.collection("usuarios").document(uid).collection("favoritos")
 
-    // ─── Carga de datos ──────────────────────────────────────────────────────
-
-    // Escucha cambios en tiempo real en la colección de listas del usuario
     fun cargarListas() {
         val uid = requireUid() ?: return
         listasListener?.remove()
@@ -111,8 +99,6 @@ class ShoppingListViewModel : ViewModel() {
             }
     }
 
-    // Escucha los productos de una lista concreta en tiempo real
-    // Al cambiar de lista, el listener anterior se cancela automáticamente
     fun cargarItems(listaId: String) {
         val uid = requireUid() ?: return
         itemsListener?.remove()
@@ -134,7 +120,6 @@ class ShoppingListViewModel : ViewModel() {
             }
     }
 
-    // Escucha los favoritos del usuario en tiempo real
     fun cargarFavoritos() {
         val uid = requireUid() ?: return
         favoritosListener?.remove()
@@ -155,9 +140,6 @@ class ShoppingListViewModel : ViewModel() {
             }
     }
 
-    // ─── Favoritos ───────────────────────────────────────────────────────────
-
-    // Guarda un favorito comprobando antes que no exista uno con el mismo nombre
     fun guardarFavorito(nombre: String, cantidad: String, precio: Double) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
@@ -167,12 +149,10 @@ class ShoppingListViewModel : ViewModel() {
                     .whereEqualTo("name", nombre.trim())
                     .get()
                     .await()
-
                 if (!existente.isEmpty) {
                     _error.value = "\"$nombre\" ya está en tus favoritos"
                     return@launch
                 }
-
                 val data = mapOf(
                     "name"     to nombre.trim(),
                     "quantity" to cantidad,
@@ -201,7 +181,6 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // Añade un favorito a una lista como si fuera un producto nuevo
     fun añadirFavoritoALista(listaId: String, favorito: FavoriteItem) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
@@ -223,11 +202,8 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // ─── Listas ──────────────────────────────────────────────────────────────
-
     fun crearLista(nombre: String) {
         val uid = requireUid() ?: return
-        // Validación en el ViewModel, no solo en la UI
         if (nombre.isBlank()) {
             _error.value = "El nombre de la lista no puede estar vacío"
             return
@@ -249,8 +225,6 @@ class ShoppingListViewModel : ViewModel() {
             }
         }
     }
-
-    // ─── Productos ───────────────────────────────────────────────────────────
 
     fun añadirItem(listaId: String, nombre: String, cantidad: String, precio: Double) {
         val uid = requireUid() ?: return
@@ -294,7 +268,6 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // Marca o desmarca un producto como recogido en el carrito
     fun toggleItem(listaId: String, itemId: String, checked: Boolean) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
@@ -311,8 +284,6 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // Elimina la lista y todos sus productos en una operación atómica (batch)
-    // Firestore no borra subcolecciones automáticamente al borrar el documento padre
     fun eliminarLista(listaId: String) {
         val uid = requireUid() ?: return
         viewModelScope.launch {
@@ -349,8 +320,6 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // Incrementa o decrementa el contador de productos de una lista de forma atómica
-    // FieldValue.increment() evita condiciones de carrera en accesos simultáneos
     private suspend fun actualizarContador(uid: String, listaId: String, delta: Int) {
         try {
             listasRef(uid).document(listaId)
@@ -361,9 +330,6 @@ class ShoppingListViewModel : ViewModel() {
         }
     }
 
-    // ─── Ciclo de vida ───────────────────────────────────────────────────────
-
-    // Cancelamos los tres listeners al destruir el ViewModel para evitar fugas de memoria
     override fun onCleared() {
         super.onCleared()
         listasListener?.remove()

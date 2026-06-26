@@ -9,13 +9,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class AuthViewModel : ViewModel() {
+// ViewModel de autenticación.
+// Marcada como open para permitir su uso en tests mediante clases fake.
+open class AuthViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val authState: StateFlow<AuthState> = _authState
+    open val authState: StateFlow<AuthState> = _authState
 
     fun registrar(
         nombre: String,
@@ -58,11 +60,11 @@ class AuthViewModel : ViewModel() {
                 val resultado = auth.createUserWithEmailAndPassword(email, password).await()
                 val uid = resultado.user?.uid ?: throw Exception("Error al obtener UID")
                 val userData = mapOf(
-                    "uid" to uid,
-                    "nombre" to nombre,
+                    "uid"       to uid,
+                    "nombre"    to nombre,
                     "apellidos" to apellidos,
-                    "email" to email,
-                    "perfiles" to perfiles
+                    "email"     to email,
+                    "perfiles"  to perfiles
                 )
                 firestore.collection("usuarios").document(uid).set(userData).await()
                 _authState.value = AuthState.Success(uid = uid, nombre = nombre, email = email, perfiles = perfiles)

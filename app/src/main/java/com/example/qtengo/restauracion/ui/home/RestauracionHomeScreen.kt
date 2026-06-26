@@ -16,9 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.qtengo.Rutas
 import com.example.qtengo.core.ui.components.QtengoTopBar
 
-data class RestauracionMenuOption(val title: String, val icon: String, val color: Color)
+data class RestauracionMenuOption(
+    val title: String,  // Texto visible en la tarjeta
+    val ruta: String,   // Ruta de navegación interna
+    val icon: String,
+    val color: Color
+)
 
 @Composable
 fun RestauracionHomeScreen(
@@ -27,10 +33,10 @@ fun RestauracionHomeScreen(
     onChangeProfile: () -> Unit
 ) {
     val menuOptions = listOf(
-        RestauracionMenuOption("Carta / Menú del día", "🍽️", Color(0xFF1565C0)),
-        RestauracionMenuOption("Stock de cocina", "🥘", Color(0xFF1976D2)),
-        RestauracionMenuOption("Reservas", "📅", Color(0xFF1E88E5)),
-        RestauracionMenuOption("Proveedores", "🚚", Color(0xFF2196F3))
+        RestauracionMenuOption(Rutas.MENU_CARTA_MENU,   Rutas.CARTA_MENU,                "🍽️", Color(0xFF1565C0)),
+        RestauracionMenuOption(Rutas.MENU_STOCK_COCINA, Rutas.STOCK_COCINA,              "🥘", Color(0xFF1976D2)),
+        RestauracionMenuOption(Rutas.MENU_RESERVAS,     Rutas.RESERVAS,                  "📅", Color(0xFF1E88E5)),
+        RestauracionMenuOption(Rutas.MENU_PROVEEDORES,  Rutas.PROVEEDORES_RESTAURACION,  "🚚", Color(0xFF2196F3))
     )
 
     Column(
@@ -60,7 +66,10 @@ fun RestauracionHomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(menuOptions) { option ->
-                RestauracionMenuCard(option = option, onClick = { onMenuSelected(option.title) })
+                RestauracionMenuCard(
+                    option = option,
+                    onClick = { onMenuSelected(option.ruta) }
+                )
             }
         }
     }

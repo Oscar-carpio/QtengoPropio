@@ -1,9 +1,3 @@
-/**
- * Pantalla principal del Panel Pyme.
- * Actúa como hub central de navegación proporcionando acceso a las secciones de:
- * Stock, Finanzas, Proveedores, Empleados y Tareas.
- * También muestra indicadores clave (KPIs) de inventario.
- */
 package com.example.qtengo.pyme.ui
 
 import androidx.compose.foundation.background
@@ -23,13 +17,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.qtengo.Rutas
 import com.example.qtengo.core.ui.components.QtengoTopBar
 import com.example.qtengo.pyme.ui.productos.ProductosViewModel
 
 /**
- * Define una opción del menú principal con su estética y destino.
+ * Pantalla principal del Panel Pyme.
+ * Actúa como hub central de navegación proporcionando acceso a las secciones de:
+ * Stock, Finanzas, Proveedores, Empleados y Tareas.
+ * También muestra indicadores clave (KPIs) de inventario.
  */
-data class OpcionMenuPyme(val title: String, val icon: String, val color: Color)
+
+data class OpcionMenuPyme(
+    val title: String,  // Texto visible en la tarjeta
+    val ruta: String,   // Ruta de navegación interna
+    val icon: String,
+    val color: Color
+)
 
 @Composable
 fun PymeInicioPantalla(
@@ -42,15 +46,17 @@ fun PymeInicioPantalla(
     val lowStockProducts by productosViewModel.lowStockProducts.observeAsState(emptyList())
 
     val menuOptions = listOf(
-        OpcionMenuPyme("Productos / Stock", "📦", Color(0xFF1565C0)),
-        OpcionMenuPyme("Gastos e ingresos", "💹", Color(0xFF1565C0)),
-        OpcionMenuPyme("Proveedores", "🚚", Color(0xFF1565C0)),
-        OpcionMenuPyme("Empleados", "👥", Color(0xFF1565C0)),
-        OpcionMenuPyme("Agenda de Tareas", "📝", Color(0xFF1565C0))
+        OpcionMenuPyme(Rutas.MENU_PRODUCTOS_STOCK,  Rutas.PRODUCTOS_STOCK,   "📦", Color(0xFF1565C0)),
+        OpcionMenuPyme(Rutas.MENU_GASTOS_INGRESOS,  Rutas.GASTOS_INGRESOS,   "💹", Color(0xFF1565C0)),
+        OpcionMenuPyme(Rutas.MENU_PROVEEDORES,       Rutas.PROVEEDORES_PYME,  "🚚", Color(0xFF1565C0)),
+        OpcionMenuPyme(Rutas.MENU_EMPLEADOS,         Rutas.EMPLEADOS,         "👥", Color(0xFF1565C0)),
+        OpcionMenuPyme(Rutas.MENU_AGENDA_TAREAS,     Rutas.AGENDA_TAREAS,     "📝", Color(0xFF1565C0))
     )
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF4F7FB))
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF4F7FB))
     ) {
         QtengoTopBar(
             title = "Perfil Pyme",
@@ -60,30 +66,39 @@ fun PymeInicioPantalla(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Marcadores de indicadores clave
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), 
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             IndicadorEstadisticoPyme(
-                title = "Productos", 
-                value = productCount.toString(), 
-                color = Color(0xFF1565C0), 
-                modifier = Modifier.weight(1f).clickable { onMenuSelected("Productos / Stock") }
+                title = "Productos",
+                value = productCount.toString(),
+                color = Color(0xFF1565C0),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onMenuSelected(Rutas.PRODUCTOS_STOCK) }
             )
             IndicadorEstadisticoPyme(
-                title = "Stock bajo", 
-                value = lowStockProducts.size.toString(), 
-                color = Color(0xFFD32F2F), 
-                modifier = Modifier.weight(1f).clickable { onMenuSelected("Productos / Stock") }
+                title = "Stock bajo",
+                value = lowStockProducts.size.toString(),
+                color = Color(0xFFD32F2F),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onMenuSelected(Rutas.PRODUCTOS_STOCK) }
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Gestión", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 16.dp))
+        Text(
+            text = "Gestión",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 16.dp)
+        )
 
-        // Cuadrícula de navegación a sub-módulos
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(16.dp),
@@ -91,36 +106,48 @@ fun PymeInicioPantalla(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(menuOptions) { option ->
-                TarjetaMenu(option = option, onClick = { onMenuSelected(option.title) })
+                TarjetaMenu(
+                    option = option,
+                    onClick = { onMenuSelected(option.ruta) }
+                )
             }
         }
     }
 }
 
-/**
- * Tarjeta interactiva del menú de navegación.
- */
 @Composable
 fun TarjetaMenu(option: OpcionMenuPyme, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(120.dp).clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = option.color),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(option.icon, fontSize = 32.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = option.title, color = Color.White, fontWeight = FontWeight.Bold)
+            Text(
+                text = option.title,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
 
-/**
- * Tarjeta para mostrar indicadores (KPIs) en el dashboard.
- * Utiliza el componente TarjetaEstadisticaPyme para mantener la consistencia visual.
- */
 @Composable
-fun IndicadorEstadisticoPyme(title: String, value: String, color: Color, modifier: Modifier = Modifier) {
+fun IndicadorEstadisticoPyme(
+    title: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
     TarjetaEstadisticaPyme(
         titulo = title,
         valor = value,
