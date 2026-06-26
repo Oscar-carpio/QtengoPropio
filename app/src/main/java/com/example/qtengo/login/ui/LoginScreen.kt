@@ -1,6 +1,5 @@
 package com.example.qtengo.login.ui
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,13 +22,10 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
 
-    // ✅ MEJORA DE SEGURIDAD: EncryptedSharedPreferences cifra claves y valores
-    // con AES-256 usando la clave maestra del Android Keystore del dispositivo.
     val prefs = remember {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
-
         EncryptedSharedPreferences.create(
             context,
             "qtengo_secure_prefs",
@@ -43,14 +39,17 @@ fun LoginScreen(
     var password by remember { mutableStateOf(prefs.getString("password_guardada", "") ?: "") }
     var recordarPassword by remember { mutableStateOf(prefs.getBoolean("recordar_password", false)) }
 
+    // Estado del diálogo de recuperación
+    var mostrarDialogoRecuperacion by remember { mutableStateOf(false) }
+    var emailRecuperacion by remember { mutableStateOf("") }
+    var mensajeRecuperacion by remember { mutableStateOf<String?>(null) }
+
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
             val success = authState as AuthState.Success
-
             prefs.edit().putString("ultimo_email", email).apply()
-
             if (recordarPassword) {
                 prefs.edit()
                     .putString("password_guardada", password)
@@ -62,10 +61,61 @@ fun LoginScreen(
                     .putBoolean("recordar_password", false)
                     .apply()
             }
-
             onLoginExitoso(success.uid, success.perfiles)
             authViewModel.reset()
         }
+    }
+
+    // Diálogo de recuperación de contraseña
+    if (mostrarDialogoRecuperacion) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogoRecuperacion = false
+                emailRecuperacion = ""
+                mensajeRecuperacion = null
+            },
+            title = { Text("Recuperar contraseña") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    OutlinedTextField(
+                        value = emailRecuperacion,
+                        onValueChange = { emailRecuperacion = it },
+                        label = { Text(stringResource(R.string.email)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    mensajeRecuperacion?.let { mensaje ->
+                        Text(
+                            text = mensaje,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    authViewModel.recuperarContrasena(emailRecuperacion) { exito ->
+                        mensajeRecuperacion = "Si ese email está registrado, recibirás un enlace en breve."
+                    }
+                }) {
+                    Text("Enviar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    mostrarDialogoRecuperacion = false
+                    emailRecuperacion = ""
+                    mensajeRecuperacion = null
+                }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Column(
@@ -136,7 +186,17 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Botón de recuperación de contraseña
+        TextButton(onClick = {
+            emailRecuperacion = email
+            mostrarDialogoRecuperacion = true
+        }) {
+            Text("¿Olvidaste tu contraseña?")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = onIrARegistro) {
             Text(stringResource(R.string.no_tienes_cuenta))

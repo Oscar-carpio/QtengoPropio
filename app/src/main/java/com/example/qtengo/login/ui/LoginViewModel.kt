@@ -100,6 +100,21 @@ open class AuthViewModel : ViewModel() {
         }
     }
 
+    fun recuperarContrasena(email: String, onResult: (Boolean) -> Unit) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            onResult(false)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                auth.sendPasswordResetEmail(email).await()
+                onResult(true)
+            } catch (e: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
     fun cerrarSesion() {
         auth.signOut()
         _authState.value = AuthState.Idle
